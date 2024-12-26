@@ -1,0 +1,18 @@
+server:
+  port: 8091
+  servlet:
+    context-path: /
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/uav_space
+    username: postgres
+    password: aa123456
+
+mybatis-plus:
+  type-handlers-package: com.zhd.handler
+
+flink:
+  job-manager-host: localhost
+  job-manager-port: 8081
