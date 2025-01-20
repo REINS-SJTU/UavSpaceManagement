@@ -8,11 +8,15 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+
 public class OctreeSpaceEncoder {
 
-    private static final int M=10;
+    private static int M=10;
     private static List<OctreeGrid> result;
     private static Octree octree;
+    private static Octree octree2;
+
+    public static void setM(int M_){ M=M_;}
 
     public static Point3D getGridLowerBound(OctreeGrid grid){
         return new Point3D(
@@ -36,16 +40,21 @@ public class OctreeSpaceEncoder {
      * 根据中心点和bounding box找到一组八叉树网格
      * @return
      */
-    public static List<OctreeGrid> encodeWithBoundingBox(Point3D pc,Point3D pMax,Point3D pMin){
+    public static List<OctreeGrid> encodeWithBoundingBox(Point3D pc,Point3D pMin,Point3D pMax){
         // 1. 找到中心所在的最小适配 [可改成二分]
-        int fitK=M;
-        for(;fitK>=0;fitK--){
+        int fitK;
+        for(fitK=M;fitK>=0;fitK--){
+//            System.out.println("======fitK:"+fitK);
+//            System.out.println(1<<(M-fitK));
+//            System.out.println(Math.min(pMax.getZ()-pMin.getZ(),Math.min(pMax.getX()-pMin.getX(),pMax.getY()-pMin.getY())));
+//            System.out.println(isInsideBoundingBox(OctreeGrid.point2OctreeGrid(pc,fitK,M),pMax,pMin));
             if((1<<(M-fitK))>Math.min(pMax.getZ()-pMin.getZ(),Math.min(pMax.getX()-pMin.getX(),pMax.getY()-pMin.getY()))) continue;
-            if(isInsideBoundingBox(OctreeGrid.point2OctreeGrid(pc,fitK,M),pMax,pMin)) break;
+            if(!isInsideBoundingBox(OctreeGrid.point2OctreeGrid(pc,fitK,M),pMax,pMin)) break;
         }
-        if(fitK<0) fitK=M;
+        fitK++;
         OctreeGrid fitGrid = OctreeGrid.point2OctreeGrid(pc, fitK, M);
         octree = new Octree(M);  // octree作为set来判重
+        octree2 = new Octree(M);  // octree作为set来判重
         result=new ArrayList<>();
 //        dfsForBoundingBoxEncoder(fitGrid,pMax,pMin,0);
         bfsForBoundingBoxEncoding(fitGrid,pMax,pMin);
@@ -88,6 +97,7 @@ public class OctreeSpaceEncoder {
             OctreeGrid grid = Q.removeFirst();
             if(isInsideBoundingBox(grid,pMax,pMin)) {
                 result.add(grid);
+                octree2.insert(grid);
                 OctreeGrid[] neighbors = grid.getNeighbors(M);
                 for(OctreeGrid neighbor: neighbors){
                     if(neighbor==null||neighbor.getX()<0||neighbor.getY()<0||neighbor.getZ()<0) continue;
@@ -96,10 +106,12 @@ public class OctreeSpaceEncoder {
                     octree.insert(neighbor);
                 }
             }else{
+//                System.out.println("========== else "+grid+","+octree.has(grid));
                 if(grid.getK()==M) continue;
                 List<OctreeGrid> subGrids = getCrossAreaBoundingBox(grid, pMax, pMin);
                 for(OctreeGrid subGrid: subGrids){
-                    if(subGrid==null||octree.has(subGrid)) continue;
+//                    System.out.println("sub "+subGrid+","+octree2.has(subGrid));
+                    if(subGrid==null||octree2.has(subGrid)) continue;
                     Q.addLast(subGrid);
                     octree.insert((subGrid));
                 }

@@ -1,6 +1,7 @@
 package com.zhd.service;
 
 import com.zhd.entity.tmp.DivisionPlan;
+import com.zhd.entity.tmp.DivisionPlan2;
 
 import java.util.List;
 
@@ -15,22 +16,30 @@ public interface GeoService {
      * @param zl
      * @return 设备Id
      */
-    void registerDevice(Double xu,Double xl,
+    String registerDevice(Double xu,Double xl,
                         Double yu,Double yl,
                         Double zu,Double zl);
 
     /**
      * 上报设备当前位置和速度
      */
-    void uploadPosition(Long uid,
-                        Double x,Double y,Double z,
+    void uploadPosition(String uid,
+                        Double px,Double py,Double pz,
                         Double vx,Double vy,Double vz,
-                        Double hvx,Double hvy,Double hvz,
+                        Double theta,Double phi,
                         Long ts);
+
+    /**
+     *  上报行人的位置和速度
+     */
+    void uploadHumanPosition(String hid,
+                             Double px,Double py,Double pz,
+                             Double vx,Double vy,Double vz,
+                             Long ts);
 
     /**
      * 规划安全区域
      * @return
      */
-    List<DivisionPlan> planSafeArea();
+    List<DivisionPlan2> planSafeArea(Long ts);
 }

@@ -1,115 +1,123 @@
 package com.zhd.geometry.algorithm;
 
-import com.zhd.entity.UavSpaceOcp;
-import com.zhd.entity.tmp.ConflictResult;
-import com.zhd.entity.tmp.DivisionPlan;
+import com.zhd.entity.tmp.DivisionPlan2;
 import com.zhd.geometry.structure.Octree;
 import com.zhd.geometry.structure.OctreeGrid;
-import com.zhd.mapper.UavSpaceOcpMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.zhd.geometry.structure.OctreeNode;
+import com.zhd.geometry.structure.Point3D;
+import javafx.util.Pair;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-@Component
+import java.util.*;
+
+
 public class CollisionDecider {
 
-    private final static String KEY_UAV_ID="uavId";
-    private final static String KEY_SMALL_OCP="smallOcp";
-    private final static String KEY_LARGE_OCP_LIST="largeOcpList";
+    private static Map<String,Integer> id2Priority;
+    private static Map<String,DivisionPlan2> mp;
+    private static int M=10;
 
-    @Autowired
-    private UavSpaceOcpMapper uavSpaceOcpMapper;
-
-    /**
-     * 第一种划分方式   java内部解决
-     * @param orgPlans
-     * @param M
-     * @return
-     */
-    public List<DivisionPlan> divide1(List<DivisionPlan> orgPlans,int M){
-        Octree octree = new Octree(M);
-        List<DivisionPlan> result = new ArrayList<>();
-
-        // 插入Small Area
-        for(DivisionPlan orgPlan: orgPlans){
-            List<OctreeGrid> smallArea = orgPlan.getSmallArea();
-            Map<String,Object> props = new HashMap<>();
-            props.put(KEY_UAV_ID,orgPlan.getUavId());
-            props.put(KEY_SMALL_OCP,true);
-            props.put(KEY_LARGE_OCP_LIST,null);
-            for(OctreeGrid grid:smallArea){
-                Map<String, Object> props_ = octree.getWithProperties(grid);
-                if(props_!=null) {
-                    System.out.println("Small Area Collides:"+orgPlan.getUavId()+"-"+props_.get(KEY_UAV_ID)+","+grid);
-                }
-                octree.insertWithProperties(grid,props);
-            }
-        }
-
-
-        // 插入Large Area
-        // 不考虑优先级，冲突区域归属于第一个遍历到的uav
-        for(DivisionPlan orgPlan:orgPlans){
-            List<OctreeGrid> largeArea = orgPlan.getLargeArea();
-            List<OctreeGrid> newLargeArea = new ArrayList<>();
-            for(OctreeGrid grid:largeArea){
-                Map<String, Object> props_ = octree.getWithProperties(grid);
-
-                if(props_==null){
-                    Map<String,Object> props = new HashMap<>();
-                    props.put(KEY_UAV_ID,orgPlan.getUavId());
-                    props.put(KEY_SMALL_OCP,false);
-                    List<Long> largeOcp = new ArrayList<>();
-                    largeOcp.add(orgPlan.getUavId());
-                    props.put(KEY_LARGE_OCP_LIST,largeArea);
-                    octree.insertWithProperties(grid,props);
-                    newLargeArea.add(grid);
-                    continue;
-                }
-                if(props_.get(KEY_UAV_ID)==orgPlan.getUavId()) continue;
-                Map<String, Object> props = octree.getWithProperties(grid);
-                List<Long> largeOcpList = (List<Long>)props.get(KEY_LARGE_OCP_LIST);
-                largeOcpList.add(orgPlan.getUavId());
-                System.out.println("Large Area Collides:"+props_.get(KEY_UAV_ID)+"-"+orgPlan.getUavId()+","+grid);
-            }
-            result.add(new DivisionPlan(orgPlan.getUavId(),orgPlan.getSmallArea(),newLargeArea));
-        }
-
-        return result;
+    public static Map<String, DivisionPlan2> decideCollisionBasedOnPriority(Map<String,DivisionPlan2> mp_, Map<String,Integer> id2Priority_, Octree octree){
+        M=octree.getM();
+        id2Priority=id2Priority_;
+        mp=mp_;
+        dfs(octree.getRoot(), new OctreeGrid(0, 0, 0, 0));
+        return mp;
     }
 
-    /**
-     * 第二种分法，SQL
-     * @param orgPlans
-     * @param M
-     * @return
-     */
-    public List<DivisionPlan> divide2(List<DivisionPlan> orgPlans,int M){
-
-        uavSpaceOcpMapper.delete(null);
-
-        for(DivisionPlan orgPlan:orgPlans) {
-            Long uavId = orgPlan.getUavId();
-            List<OctreeGrid> largeArea = orgPlan.getLargeArea();
-            for (OctreeGrid grid : largeArea) {
-                OctreeGrid reverseGrid = grid.reverseBits();
-                uavSpaceOcpMapper.insert(new UavSpaceOcp(
-                        uavId,
-                        reverseGrid.getX(),
-                        reverseGrid.getY(),
-                        reverseGrid.getZ(),
-                        reverseGrid.getK()
-                ));
-            }
+    private static List<Pair<String,OctreeGrid>> dfs(OctreeNode parent, OctreeGrid grid){
+        List<Pair<String,OctreeGrid>> higherPriorityIds= new ArrayList<>();
+        if(parent==null) return higherPriorityIds;
+        String maxId = getMaxPriorityOfOctreeNode(parent, grid);
+        if(maxId==null) return higherPriorityIds;
+        if(parent.isLeaf()){
+            higherPriorityIds.add(new Pair<>(maxId,grid));
+            return higherPriorityIds;
         }
 
-        List<ConflictResult> conflictResults = uavSpaceOcpMapper.calculateConflict();
+        for(int i=0;i<8;i++){
+            OctreeNode child = parent.getKthChild(i);
+            OctreeGrid subGrid = grid.getSubOctreeGrid(i, M);
+            List<Pair<String,OctreeGrid>> ids2 = dfs(child, subGrid);
+            for(Pair<String,OctreeGrid> pair:ids2){
+                // 子优先级比父高，父挖块
+                if(id2Priority.get(pair.getKey())>id2Priority.get(maxId)){
+                    excludeGrid(maxId,pair.getValue());
+                    higherPriorityIds.add(pair);
+                }else{
+                    // 父优先级高，子挖块
+                    excludeGrid(pair.getKey(), pair.getValue());
+                }
+            }
+        }
+        higherPriorityIds.add(new Pair<>(maxId,grid));
+
+        return higherPriorityIds;
+    }
+
+    private static void excludeGrid(String id,OctreeGrid grid){
+        DivisionPlan2 divisionPlan2 = mp.get(id);
+        List<OctreeGrid> exclude = divisionPlan2.getExclude();
+        if(exclude==null)exclude=new ArrayList<>();
+        exclude.add(grid);
+        divisionPlan2.setExclude(exclude);
+        mp.put(id,divisionPlan2);
+    }
+
+    // 做同结点的id之间的优先级筛选，选出优先级最高的，去掉其他
+    private static String getMaxPriorityOfOctreeNode(OctreeNode node,OctreeGrid grid){
+        Map<String, Object> props = node.getProperties();
+        if (props==null|| !props.containsKey("conflictIdSet")) return null;
+        Set<String> s = (Set<String>) props.get("conflictIdSet");
+        int maxPriority=-1;
+        String maxId=null;
+        for(String id:s){
+            int priority = id2Priority.get(id);
+            if(maxPriority<priority){
+                maxPriority=priority;
+                if(maxId!=null) {
+                    excludeGrid(maxId,grid);
+                }
+                maxId=id;
+            }else{
+                excludeGrid(id,grid);
+            }
+        }
+        props.put("maxPriority",maxPriority);
+        props.put("maxPriorityId",maxId);
+        node.setProperties(props);
+        return maxId;
+    }
 
 
-        return null;
+    // block [pc,pMin,pMax]  block之间是否有冲突区域，输出冲突范围 [pMin,pMax]
+    public static Point3D[] getBlocksConflict(Point3D[] block1, Point3D[] block2){
+        Point3D pMin1 =block1[1];
+        Point3D pMin2 =block2[1];
+        Point3D pMax1 =block1[2];
+        Point3D pMax2 =block2[2];
+        if(pMin1.getX()> pMax2.getX()|| pMin2.getX()>pMax1.getX()) return null;
+        if(pMin1.getY()> pMax2.getY()|| pMin2.getY()>pMax1.getY()) return null;
+        if(pMin1.getZ()> pMax2.getZ()|| pMin2.getZ()>pMax1.getZ()) return null;
+        double[] xx = middleTwoOfFour(new double[]{
+                pMin1.getX(), pMax1.getX(), pMin2.getX(), pMax2.getX()
+        });
+        double[] yy = middleTwoOfFour(new double[]{
+                pMin1.getY(), pMax1.getY(), pMin2.getY(), pMax2.getY()
+        });
+        double[] zz = middleTwoOfFour(new double[]{
+                pMin1.getZ(), pMax1.getZ(), pMin2.getZ(), pMax2.getZ()
+        });
+        return new Point3D[]{
+                new Point3D((xx[0]+xx[1])/2,(yy[0]+yy[1])/2,(zz[0]+zz[1])/2),
+                new Point3D(xx[0],yy[0],zz[0]),
+                new Point3D(xx[1],yy[1],zz[1])
+        };
+    }
+
+    // 给出4个数，从小到达排序后返回中间两个数
+    private static double[] middleTwoOfFour(double[] numbers){
+        Arrays.sort(numbers);
+        return new double []{numbers[1],numbers[2]};
     }
 }
