@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+@Deprecated
 @Data
 @AllArgsConstructor
 @TableName(value="u_space_ocp",autoResultMap = true)

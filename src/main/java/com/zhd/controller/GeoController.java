@@ -1,11 +1,13 @@
 package com.zhd.controller;
 
 import com.zhd.entity.tmp.DivisionPlan;
+import com.zhd.entity.tmp.DivisionPlan2;
 import com.zhd.service.GeoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -19,31 +21,44 @@ public class GeoController {
      * 注册设备元信息
      */
     @PostMapping("/register")
-    public void setNewShape(@RequestParam("xu")Double xu,
+    public String setNewShape(@RequestParam("xu")Double xu,
                                    @RequestParam("xl")Double xl,
                                    @RequestParam("yu")Double yu,
                                    @RequestParam("yl")Double yl,
                                    @RequestParam("zu")Double zu,
                                    @RequestParam("zl")Double zl){
-        geoService.registerDevice(xu, xl, yu, yl, zu, zl);
+        return geoService.registerDevice(xu, xl, yu, yl, zu, zl);
     }
 
     /**
      * 某设备上报位置
      */
     @PostMapping("/position")
-    public void updatePosition(@RequestParam("uid")Long uid,
-                                 @RequestParam("x")Double x,
-                                 @RequestParam("y")Double y,
-                                 @RequestParam("z")Double z,
+    public void updatePosition(@RequestParam("uid")String uid,
+                                 @RequestParam("px")Double px,
+                                 @RequestParam("py")Double py,
+                                 @RequestParam("pz")Double pz,
                                  @RequestParam("vx")Double vx,
                                  @RequestParam("vy")Double vy,
                                  @RequestParam("vz")Double vz,
-                               @RequestParam("hvx")Double hvx,
-                               @RequestParam("hvy")Double hvy,
-                               @RequestParam("hvz")Double hvz,
+                               @RequestParam("theta")Double theta,
+                               @RequestParam("phi")Double phi,
                                  @RequestParam("ts")Long ts){
-        geoService.uploadPosition(uid,x,y,z,vx,vy,vz,hvx,hvy,hvz,ts);
+        geoService.uploadPosition(uid,px,py,pz,vx,vy,vz,theta,phi,ts);
+    }
+
+    /**
+     * 上报行人位置
+     */
+    public void updateHumanPosition(@RequestParam("hid")Long hid,
+                                    @RequestParam("px")Double px,
+                                    @RequestParam("py")Double py,
+                                    @RequestParam("pz")Double pz,
+                                    @RequestParam("vx")Double vx,
+                                    @RequestParam("vy")Double vy,
+                                    @RequestParam("vz")Double vz,
+                                    @RequestParam("ts")Long ts){
+
     }
 
     /**
@@ -51,10 +66,9 @@ public class GeoController {
      * @return 每个设备即对应的区域编码
      */
     @GetMapping("/safeArea")
-    public List<DivisionPlan> getSafeArea(){
-        List<DivisionPlan> divisionPlans = geoService.planSafeArea();
-//        System.out.println("=======safe area division =========");
-//        for(DivisionPlan plan:divisionPlans) System.out.println(plan);
+    public List<DivisionPlan2> getSafeArea(){
+//        long current = new Date().getTime();
+        List<DivisionPlan2> divisionPlans = geoService.planSafeArea(10L);
         return divisionPlans;
     }
 }

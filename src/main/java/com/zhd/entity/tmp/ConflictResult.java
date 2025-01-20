@@ -2,6 +2,7 @@ package com.zhd.entity.tmp;
 
 import lombok.Data;
 
+@Deprecated
 @Data
 public class ConflictResult {
     private Integer x;

@@ -81,8 +81,25 @@ public class OctreeGrid {
         return num|(1<<t);
     }
 
+    // 求upper和lower的公共前缀，及前缀长度
+    public static int[] commonPrefix(int upper,int lower,int M){
+        int t=upper^lower;
+        int r=0;
+        while(t>0) {
+            r++;
+            t>>=1;
+        }
+        int t2=(1<<(M-r))-1;
+        return new int[]{upper&(t2<<r),M-r};
+    }
 
-
+    public static OctreeGrid  tau(Point3D[] block,int M){
+        int[] xx= OctreeGrid.commonPrefix((int)Math.ceil(block[2].getX()),(int)Math.floor(block[1].getX()),M);
+        int[] yy= OctreeGrid.commonPrefix((int)Math.ceil(block[2].getY()),(int)Math.floor(block[1].getY()),M);
+        int[] zz= OctreeGrid.commonPrefix((int)Math.ceil(block[2].getZ()),(int)Math.floor(block[1].getZ()),M);
+        int k = Math.min(xx[1],Math.min(yy[1],zz[1]));
+        return new OctreeGrid(xx[0], yy[0], zz[0], k);
+    }
 
     // 转成倒序
     public OctreeGrid reverseBits(){

@@ -13,6 +13,8 @@ spring:
 mybatis-plus:
   type-handlers-package: com.zhd.handler
 
-flink:
-  job-manager-host: localhost
-  job-manager-port: 8081
+mappo:
+  url: http://localhost:8000
+
+octree:
+  M: 10

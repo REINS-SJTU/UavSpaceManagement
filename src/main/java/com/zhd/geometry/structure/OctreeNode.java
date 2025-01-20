@@ -18,13 +18,17 @@ public class OctreeNode {
     }
 
     public OctreeNode getKthChild(int k){
-        return children==null||k>=8||k<0?null: children[k];
+        return (children==null||k>=8||k<0)?null: children[k];
     }
 
     public void setKthChild(int k,OctreeNode child){
         if(k>=8||k<0) return ;
         if(children[k]==null) degree++;
         children[k]=child;
+    }
+
+    public boolean isLeaf(){
+        return degree<=0;
     }
 
 }
