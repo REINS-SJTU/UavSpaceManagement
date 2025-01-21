@@ -70,7 +70,7 @@ public class GeoController {
     @GetMapping("/safeArea")
     public List<DivisionPlan2> getSafeArea(){
 //        long current = new Date().getTime();
-        List<DivisionPlan2> divisionPlans = geoService.planSafeArea(10L);
+        List<DivisionPlan2> divisionPlans = geoService.planSafeArea(0L);
         return divisionPlans;
     }
 }

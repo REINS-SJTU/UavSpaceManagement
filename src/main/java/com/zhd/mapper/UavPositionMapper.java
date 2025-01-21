@@ -38,7 +38,7 @@ public interface UavPositionMapper extends BaseMapper<UavPosition> {
             " FROM (SELECT uav_id,MAX(ts) ts FROM u_position GROUP BY uav_id) p " +
             " NATURAL JOIN u_position po " +
             " LEFT JOIN u_info i on p.uav_id=i.uav_id " +
-            " WHERE ts>#{ts} AND p.uav_id = ANY(string_to_array(#{ids},',')::int[])" +
+            " WHERE ts>#{ts} AND p.uav_id = ANY(string_to_array(#{ids},',')::varchar[])" +
             " ORDER BY (po.vx-#{dx})*(po.vx-#{dx})+(po.vy-#{dy})*(po.vy-#{dy})+(po.vz-#{dz})*(po.vz-#{dz}) ASC" +
             " LIMIT #{limit};")
     List<ObservationVehicle> getObservationVehicles(String ids,Long ts,int limit,double dx,double dy,double dz);

@@ -121,9 +121,9 @@ public class GeoServiceImpl implements GeoService {
             // observation self
             ObservationSelf self = uavPositionMapper.getObservationSelf(ts,uavPosShape.getUavId());
 
-            thisObs.add(self.getVx()/self.getV());
-            thisObs.add(self.getVy()/self.getV());
-            thisObs.add(self.getVz()/self.getV());
+            thisObs.add(Math.abs(self.getV())<=0.001?0.001:(self.getVx()/self.getV()));
+            thisObs.add(Math.abs(self.getV())<=0.001?0.001:(self.getVy()/self.getV()));
+            thisObs.add(Math.abs(self.getV())<=0.001?0.001:(self.getVz()/self.getV()));
             thisObs.add(self.getV());
             thisObs.add(1.0*self.getPriority());
             id2Priority.put(uavPosShape.getUavId(),self.getPriority());
@@ -239,6 +239,7 @@ public class GeoServiceImpl implements GeoService {
         Map<String,Object> mp = new HashMap<>();
         mp.put("model_name","mappo");
         mp.put("obs",obs);
+        System.out.println(mp);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(mp, headers);
