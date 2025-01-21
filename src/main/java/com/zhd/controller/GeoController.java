@@ -21,13 +21,14 @@ public class GeoController {
      * 注册设备元信息
      */
     @PostMapping("/register")
-    public String setNewShape(@RequestParam("xu")Double xu,
+    public String setNewShape(@RequestParam("uid") String uid,
+                                   @RequestParam("xu")Double xu,
                                    @RequestParam("xl")Double xl,
                                    @RequestParam("yu")Double yu,
                                    @RequestParam("yl")Double yl,
                                    @RequestParam("zu")Double zu,
                                    @RequestParam("zl")Double zl){
-        return geoService.registerDevice(xu, xl, yu, yl, zu, zl);
+        return geoService.registerDevice(uid, xu, xl, yu, yl, zu, zl);
     }
 
     /**
@@ -50,7 +51,8 @@ public class GeoController {
     /**
      * 上报行人位置
      */
-    public void updateHumanPosition(@RequestParam("hid")Long hid,
+    @PostMapping("/humanPosition")
+    public void updateHumanPosition(@RequestParam("hid")String hid,
                                     @RequestParam("px")Double px,
                                     @RequestParam("py")Double py,
                                     @RequestParam("pz")Double pz,
@@ -58,7 +60,7 @@ public class GeoController {
                                     @RequestParam("vy")Double vy,
                                     @RequestParam("vz")Double vz,
                                     @RequestParam("ts")Long ts){
-
+        geoService.uploadHumanPosition(hid,px,py,pz,vx,vy,vz,ts);
     }
 
     /**

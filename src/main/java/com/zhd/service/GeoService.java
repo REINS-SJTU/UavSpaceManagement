@@ -16,7 +16,8 @@ public interface GeoService {
      * @param zl
      * @return 设备Id
      */
-    String registerDevice(Double xu,Double xl,
+    String registerDevice(String uid,
+                        Double xu,Double xl,
                         Double yu,Double yl,
                         Double zu,Double zl);
 

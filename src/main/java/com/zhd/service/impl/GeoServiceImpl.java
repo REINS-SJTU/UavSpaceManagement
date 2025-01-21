@@ -47,14 +47,16 @@ public class GeoServiceImpl implements GeoService {
     private ConstantValues constantValues;
 
     @Override
-    public String registerDevice(Double xu, Double xl, Double yu, Double yl, Double zu, Double zl) {
+    public String registerDevice(String uid, Double xu, Double xl, Double yu, Double yl, Double zu, Double zl) {
         UavShape uavShape = new UavShape();
+        uavShape.setUavId(uid);
         uavShape.setXu(xu);
         uavShape.setXl(xl);
         uavShape.setYu(yu);
         uavShape.setYl(yl);
         uavShape.setZu(zu);
         uavShape.setZl(zl);
+        uavShapeMapper.deleteByMap(Collections.singletonMap("uav_id",uid));
         uavShapeMapper.insert(uavShape);
         return uavShape.getUavId();
     }
