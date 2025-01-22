@@ -79,9 +79,9 @@ public class GeoUtil {
     public static Zone recoverZone(UavPosShape self,Zone zone){
         Point3D[] boundingBox = recover(self);
         return new Zone(
-                new double[]{boundingBox[2].getX()+zone.getX()[0],boundingBox[1].getX()-zone.getX()[1]},
-                new double[]{boundingBox[2].getY()+zone.getY()[0],boundingBox[1].getY()-zone.getY()[1]},
-                new double[]{boundingBox[2].getZ()+zone.getZ()[0],boundingBox[1].getZ()-zone.getZ()[1]}
+                new double[]{boundingBox[1].getX()-zone.getX()[0],boundingBox[2].getX()+zone.getX()[1]},
+                new double[]{boundingBox[1].getY()-zone.getY()[0],boundingBox[2].getY()+zone.getY()[1]},
+                new double[]{boundingBox[1].getZ()-zone.getZ()[0],boundingBox[2].getZ()+zone.getZ()[1]}
 
         );
     }
