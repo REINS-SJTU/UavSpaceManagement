@@ -146,9 +146,9 @@ public class GeoServiceImpl implements GeoService {
                     thisObs.add(o.getDx());
                     thisObs.add(o.getDy());
                     thisObs.add(o.getDz());
-                    thisObs.add(o.getVx());
-                    thisObs.add(o.getVy());
-                    thisObs.add(o.getVz());
+                    thisObs.add(Math.abs(o.getV())<=0.001?0.001:(o.getVx()/o.getV()));
+                    thisObs.add(Math.abs(o.getV())<=0.001?0.001:(o.getVy()/o.getV()));
+                    thisObs.add(Math.abs(o.getV())<=0.001?0.001:(o.getVz()/o.getV()));
                     thisObs.add(o.getV());
                     thisObs.add(o.getPriority());
                 }else {

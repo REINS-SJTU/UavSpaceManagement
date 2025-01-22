@@ -31,7 +31,7 @@ public interface UavPositionMapper extends BaseMapper<UavPosition> {
 
 
 
-    @Select(" SELECT po.px AS dx,po.py AS dy,po.pz AS dz," +
+    @Select(" SELECT po.px-#{dx} AS dx,po.py-#{dy} AS dy,po.pz-#{dz} AS dz," +
             "  po.vx AS vx,po.vy AS vy,po.vz AS vz," +
             "  SQRT(po.vx*po.vx+po.vy*po.vy+po.vz*po.vz) AS v," +
             "  i.priority AS priority" +

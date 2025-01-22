@@ -12,7 +12,7 @@ import java.util.List;
 @Mapper
 @Repository
 public interface HumanPositionMapper extends BaseMapper<HumanPosition> {
-    @Select(" SELECT px AS dx, py AS dy, pz AS dz ,0 AS fear" +
+    @Select(" SELECT px-#{dx} AS dx, py-#{dy} AS dy, pz-#{dz} AS dz ,0 AS fear" +
             " FROM h_position " +
             " WHERE ts>#{ts}" +
             " ORDER BY (px-#{dx})*(px-#{dx})+(py-#{dy})*(py-#{dy})+(pz-#{dz})*(pz-#{dz}) ASC " +
