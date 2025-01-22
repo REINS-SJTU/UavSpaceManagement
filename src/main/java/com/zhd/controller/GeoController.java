@@ -68,9 +68,9 @@ public class GeoController {
      * @return 每个设备即对应的区域编码
      */
     @GetMapping("/safeArea")
-    public List<DivisionPlan2> getSafeArea(){
+    public List<DivisionPlan2> getSafeArea(@RequestParam("ts")Long ts){
 //        long current = new Date().getTime();
-        List<DivisionPlan2> divisionPlans = geoService.planSafeArea(0L);
+        List<DivisionPlan2> divisionPlans = geoService.planSafeArea(ts);
         return divisionPlans;
     }
 }
