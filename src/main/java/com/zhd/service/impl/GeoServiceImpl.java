@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GeoServiceImpl implements GeoService {
@@ -94,11 +95,17 @@ public class GeoServiceImpl implements GeoService {
 
     @Override
     public void batchUploadHumanPosition(List<HumanPosition> humanPositions) {
+        if (humanPositions.isEmpty()) {
+            return;
+        }
         humanPositionMapper.batchInsert(humanPositions);
     }
 
     @Override
     public void batchUploadDevicePosition(List<UavPosition> devicePositions) {
+        if (devicePositions.isEmpty()) {
+            return;
+        }
         uavPositionMapper.batchInsert(devicePositions);
     }
 
@@ -119,18 +126,21 @@ public class GeoServiceImpl implements GeoService {
             octreeSearcher.insertUav(uavPosShape.getUavId(),boundingBox);
         }
 
+        List<UavPosition> latestUavPositions = uavPositionMapper.getLatestUavPositions(ts);
+        List<HumanPosition> latestHumanPositions = humanPositionMapper.getLatestHumanPositions(ts);
+
         // 计算obs
         List<List<Double>> obs =new ArrayList<>();
         Map<String,Integer> id2Priority = new HashMap<>();
         for(UavPosShape uavPosShape:uavPosShapes){
-            Point3D[] boundingBox = GeoUtil.recover(uavPosShape);
-            List<String> ids = octreeSearcher.findNearestKUav(boundingBox, 8);
-            ids.remove(uavPosShape.getUavId());
-
             List<Double> thisObs = new ArrayList<>();
 
             // observation self
-            ObservationSelf self = uavPositionMapper.getObservationSelf(ts,uavPosShape.getUavId());
+            UavPosition positionSelf = latestUavPositions.stream()
+                    .filter(pos -> pos.getUavId().equals(uavPosShape.getUavId()))
+                    .findFirst().orElse(null);
+            assert positionSelf != null;
+            ObservationSelf self = getObservationSelf(positionSelf);
 
             thisObs.add(Math.abs(self.getV())<=0.001?0.001:(self.getVx()/self.getV()));
             thisObs.add(Math.abs(self.getV())<=0.001?0.001:(self.getVy()/self.getV()));
@@ -140,17 +150,7 @@ public class GeoServiceImpl implements GeoService {
             id2Priority.put(uavPosShape.getUavId(),self.getPriority());
 
             // observation vehicles
-            String idStr = "";
-            if(ids.isEmpty()) idStr="-1024";
-            else
-                for(int i=0;i<ids.size();i++){
-                    idStr += ids.get(i);
-                    if(i!=ids.size()-1) idStr+=",";
-                }
-
-            List<ObservationVehicle> observationVehicles = uavPositionMapper.getObservationVehicles(idStr, ts,7,self.getDx(),self.getDy(),self.getDz());
-
-
+            List<ObservationVehicle> observationVehicles = getObservationVehicles(latestUavPositions, positionSelf);
             for(int i=0;i<6;i++){
                 if(i<observationVehicles.size()){
                     ObservationVehicle o = observationVehicles.get(i);
@@ -169,7 +169,7 @@ public class GeoServiceImpl implements GeoService {
 
 
             // observation human
-            List<ObservationHuman> observationHumans = humanPositionMapper.getObservationHumans(ts, 6, self.getDx(),self.getDy(),self.getDz());
+            List<ObservationHuman> observationHumans = getObservationHumans(latestHumanPositions, positionSelf);
             for(ObservationHuman observationHuman:observationHumans){
                 observationHuman.setFear(GeoUtil.calculateFear(self,observationHuman));
             }
@@ -250,7 +250,7 @@ public class GeoServiceImpl implements GeoService {
         Map<String,Object> mp = new HashMap<>();
         mp.put("model_name","mappo");
         mp.put("obs",obs);
-        System.out.println(mp);
+        // System.out.println(mp);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(mp, headers);
@@ -260,6 +260,60 @@ public class GeoServiceImpl implements GeoService {
         List<Zone>  zones= new ArrayList<>();
         for(Object o:list) zones.add((Zone) o);
         return zones;
+    }
+
+    private ObservationSelf getObservationSelf(UavPosition uavPosition) {
+        ObservationSelf self = new ObservationSelf();
+        self.setDx(uavPosition.getPx());
+        self.setDy(uavPosition.getPy());
+        self.setDz(uavPosition.getPz());
+        self.setVx(uavPosition.getVx());
+        self.setVy(uavPosition.getVy());
+        self.setVz(uavPosition.getVz());
+        self.setV(Math.sqrt(uavPosition.getVx() * uavPosition.getVx() +
+                uavPosition.getVy() * uavPosition.getVy() +
+                uavPosition.getVz() * uavPosition.getVz()));
+        self.setPriority(1);
+        // 设置优先级等其他字段
+        return self;
+    }
+
+    private List<ObservationVehicle> getObservationVehicles(List<UavPosition> uavPositions, UavPosition self) {
+        return uavPositions.stream()
+                .filter(uav -> !uav.getUavId().equals(self.getUavId())) // 排除自身
+                .map(uav -> {
+                    ObservationVehicle obsVehicle = new ObservationVehicle();
+                    obsVehicle.setDx(uav.getPx() - self.getPx());
+                    obsVehicle.setDy(uav.getPy() - self.getPy());
+                    obsVehicle.setDz(uav.getPz() - self.getPz());
+                    obsVehicle.setVx(uav.getVx());
+                    obsVehicle.setVy(uav.getVy());
+                    obsVehicle.setVz(uav.getVz());
+                    obsVehicle.setV(Math.sqrt(uav.getVx() * uav.getVx() +
+                            uav.getVy() * uav.getVy() +
+                            uav.getVz() * uav.getVz()));
+                    obsVehicle.setPriority(1);
+                    // 设置优先级等其他字段
+                    return obsVehicle;
+                })
+                .sorted(Comparator.comparingDouble(v -> (v.getDx() * v.getDx() + v.getDy() * v.getDy() + v.getDz() * v.getDz())))
+                .limit(7) // 限制数量
+                .collect(Collectors.toList());
+    }
+
+    private List<ObservationHuman> getObservationHumans(List<HumanPosition> humanPositions, UavPosition self) {
+        return humanPositions.stream()
+                .map(human -> {
+                    ObservationHuman obsHuman = new ObservationHuman();
+                    obsHuman.setDx(human.getPx() - self.getPx());
+                    obsHuman.setDy(human.getPy() - self.getPy());
+                    obsHuman.setDz(human.getPz() - self.getPz());
+                    obsHuman.setFear(0);
+                    return obsHuman;
+                })
+                .sorted(Comparator.comparingDouble(h -> (h.getDx() * h.getDx() + h.getDy() * h.getDy() + h.getDz() * h.getDz())))
+                .limit(6) // 限制数量
+                .collect(Collectors.toList());
     }
 
 //    @Override

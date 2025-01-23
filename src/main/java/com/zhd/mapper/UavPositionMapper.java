@@ -7,10 +7,9 @@ import com.zhd.entity.tmp.ObservationVehicle;
 import com.zhd.entity.tmp.UavPosShape;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Insert;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 @Mapper
@@ -49,4 +48,14 @@ public interface UavPositionMapper extends BaseMapper<UavPosition> {
             " ORDER BY (po.vx-#{dx})*(po.vx-#{dx})+(po.vy-#{dy})*(po.vy-#{dy})+(po.vz-#{dz})*(po.vz-#{dz}) ASC" +
             " LIMIT #{limit};")
     List<ObservationVehicle> getObservationVehicles(String ids,Long ts,int limit,double dx,double dy,double dz);
+
+    @Select("SELECT uav_id, px, py, pz, vx, vy, vz, ts " +
+            "FROM u_position " +
+            "WHERE ts > #{ts} AND (uav_id, ts) IN (" +
+            "    SELECT uav_id, MAX(ts) " +
+            "    FROM u_position " +
+            "    WHERE ts > #{ts} " +
+            "    GROUP BY uav_id" +
+            ")")
+    List<UavPosition> getLatestUavPositions(Long ts);
 }
