@@ -91,6 +91,17 @@ public class GeoServiceImpl implements GeoService {
         humanPositionMapper.insert(humanPosition);
     }
 
+
+    @Override
+    public void batchUploadHumanPosition(List<HumanPosition> humanPositions) {
+        humanPositionMapper.batchInsert(humanPositions);
+    }
+
+    @Override
+    public void batchUploadDevicePosition(List<UavPosition> devicePositions) {
+        uavPositionMapper.batchInsert(devicePositions);
+    }
+
     @Override
     public List<DivisionPlan2> planSafeArea(Long ts) {
         List<UavPosShape> uavPosShapes = uavPositionMapper.getUavPosShapeBeforeWindow(ts);

@@ -16,6 +16,15 @@ import java.util.List;
 @Mapper
 @Repository
 public interface UavPositionMapper extends BaseMapper<UavPosition> {
+    @Insert({
+            "<script>",
+            "INSERT INTO u_position (uav_id, px, py, pz, vx, vy, vz, theta, phi, ts) VALUES ",
+            "<foreach collection='list' item='item' index='index' separator=','>",
+            "(#{item.uavId}, #{item.px}, #{item.py}, #{item.pz}, #{item.vx}, #{item.vy}, #{item.vz}, #{item.theta}, #{item.phi}, #{item.ts})",
+            "</foreach>",
+            "</script>"
+    })
+    void batchInsert(List<UavPosition> uavPositions);
 
     @Select("SELECT * FROM (SELECT uav_id,MAX(ts) ts FROM u_position GROUP BY uav_id) p " +
             "NATURAL JOIN u_position LEFT JOIN u_shape s ON p.uav_id=s.uav_id WHERE ts>#{ts}")
@@ -27,8 +36,6 @@ public interface UavPositionMapper extends BaseMapper<UavPosition> {
             " FROM (SELECT uav_id,MAX(ts) ts FROM u_position GROUP BY uav_id) p " +
             "NATURAL JOIN u_position po LEFT JOIN u_info i ON p.uav_id=i.uav_id WHERE ts>#{ts} AND p.uav_id=#{id} limit 1")
     ObservationSelf getObservationSelf(Long ts,String id);
-
-
 
 
     @Select(" SELECT po.px-#{dx} AS dx,po.py-#{dy} AS dy,po.pz-#{dz} AS dz," +

@@ -5,6 +5,8 @@ import com.zhd.entity.tmp.DivisionPlan2;
 import com.zhd.service.GeoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.zhd.entity.HumanPosition;
+import com.zhd.entity.UavPosition;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,7 +23,7 @@ public class GeoController {
      * 注册设备元信息
      */
     @PostMapping("/register")
-    public String setNewShape(@RequestParam("uid") String uid,
+    public String setNewShape(@RequestParam("uavId") String uid,
                                    @RequestParam("xu")Double xu,
                                    @RequestParam("xl")Double xl,
                                    @RequestParam("yu")Double yu,
@@ -35,7 +37,7 @@ public class GeoController {
      * 某设备上报位置
      */
     @PostMapping("/position")
-    public void updatePosition(@RequestParam("uid")String uid,
+    public void updatePosition(@RequestParam("uavId")String uid,
                                  @RequestParam("px")Double px,
                                  @RequestParam("py")Double py,
                                  @RequestParam("pz")Double pz,
@@ -48,11 +50,17 @@ public class GeoController {
         geoService.uploadPosition(uid,px,py,pz,vx,vy,vz,theta,phi,ts);
     }
 
+
+    @PostMapping("/position/batch")
+    public void batchUpdateDevicePosition(@RequestBody List<UavPosition> devicePositions){
+        geoService.batchUploadDevicePosition(devicePositions);
+    }
+
     /**
      * 上报行人位置
      */
     @PostMapping("/humanPosition")
-    public void updateHumanPosition(@RequestParam("hid")String hid,
+    public void updateHumanPosition(@RequestParam("humanId")String hid,
                                     @RequestParam("px")Double px,
                                     @RequestParam("py")Double py,
                                     @RequestParam("pz")Double pz,
@@ -61,6 +69,11 @@ public class GeoController {
                                     @RequestParam("vz")Double vz,
                                     @RequestParam("ts")Long ts){
         geoService.uploadHumanPosition(hid,px,py,pz,vx,vy,vz,ts);
+    }
+
+    @PostMapping("/humanPosition/batch")
+    public void batchUpdateHumanPosition(@RequestBody List<HumanPosition> humanPositions){
+        geoService.batchUploadHumanPosition(humanPositions);
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.zhd.service;
 
+import com.zhd.entity.HumanPosition;
+import com.zhd.entity.UavPosition;
 import com.zhd.entity.tmp.DivisionPlan;
 import com.zhd.entity.tmp.DivisionPlan2;
 
@@ -37,6 +39,11 @@ public interface GeoService {
                              Double px,Double py,Double pz,
                              Double vx,Double vy,Double vz,
                              Long ts);
+
+    void batchUploadHumanPosition(List<HumanPosition> humanPositions);
+
+    void batchUploadDevicePosition(List<UavPosition> devicePositions);
+
 
     /**
      * 规划安全区域
