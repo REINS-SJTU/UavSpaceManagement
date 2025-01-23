@@ -297,6 +297,7 @@ public class GeoServiceImpl implements GeoService {
                     return obsVehicle;
                 })
                 .sorted(Comparator.comparingDouble(v -> (v.getDx() * v.getDx() + v.getDy() * v.getDy() + v.getDz() * v.getDz())))
+                .filter(v -> (v.getDx() * v.getDx() + v.getDy() * v.getDy() + v.getDz() * v.getDz()) < 20 * 20) // 排除距离过远的
                 .limit(7) // 限制数量
                 .collect(Collectors.toList());
     }
@@ -312,6 +313,7 @@ public class GeoServiceImpl implements GeoService {
                     return obsHuman;
                 })
                 .sorted(Comparator.comparingDouble(h -> (h.getDx() * h.getDx() + h.getDy() * h.getDy() + h.getDz() * h.getDz())))
+                .filter(v -> (v.getDx() * v.getDx() + v.getDy() * v.getDy() + v.getDz() * v.getDz()) < 10 * 10) // 排除距离过远的
                 .limit(6) // 限制数量
                 .collect(Collectors.toList());
     }
