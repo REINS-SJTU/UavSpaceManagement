@@ -9,4 +9,6 @@ public class ConstantValues {
     public String MAPPO_URL;
     @Value("${octree.M}")
     public int M;
+    @Value("${octree.R}")
+    public double R;
 }

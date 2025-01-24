@@ -19,12 +19,10 @@ public class OctreeSearcher {
     }
 
     public List<ConflictZonePairs> checkLargeLargeConflict(Map<String, Object> props,String uavId,Point3D[] zone0){
-        System.out.println("===== check large large conflict ====");
         List<ConflictZonePairs> conflictZones=new ArrayList<>();
         if(props!=null){
             Object o1 = props.get("zids");
             Object o2 = props.get("zones");
-            System.out.println(o1+","+o2);
             if(o1!=null&&o2!=null){
                 List<String> zids = (List<String>) o1;
                 List<Point3D[]> zones = (List<Point3D[]>) o2;
@@ -32,9 +30,9 @@ public class OctreeSearcher {
                     if(Objects.equals(uavId, zids.get(j))) continue;
                     Point3D[] zone1 = zones.get(j);
                     Point3D[] conflict = CollisionDecider.getBlocksConflict(zone0, zone1);
-                    System.out.println(uavId+":"+Arrays.toString(zone0));
-                    System.out.println(zids.get(j)+":"+Arrays.toString(zone1));
-                    System.out.println(Arrays.toString(conflict));
+//                    System.out.println(uavId+":"+Arrays.toString(zone0));
+//                    System.out.println(zids.get(j)+":"+Arrays.toString(zone1));
+//                    System.out.println(Arrays.toString(conflict));
                     if(conflict!=null) {
                         ConflictZonePairs conflictZonePairs = new ConflictZonePairs(uavId, zids.get(j), conflict,3);
                         conflictZones.add(conflictZonePairs);
@@ -70,7 +68,6 @@ public class OctreeSearcher {
     // 插入一个Zone(有冲突版的R_max)
     // 返回插入该Zone时会发生的冲突
     public List<ConflictZonePairs> insertZone(String uavId, Zone zone){
-        System.out.println("insert zone:"+uavId+",  "+zone);
         Point3D pMax = new Point3D(Math.max(zone.getX()[0],zone.getX()[1]),
                 Math.max(zone.getY()[0],zone.getY()[1]),Math.max(zone.getZ()[0],zone.getZ()[1]));
         Point3D pMin = new Point3D(Math.min(zone.getX()[0],zone.getX()[1]),
@@ -79,7 +76,6 @@ public class OctreeSearcher {
                 (zone.getZ()[0]+zone.getZ()[1])/2);
         Point3D[] zone0=new Point3D[]{pc, pMin, pMax};
         OctreeGrid tau = OctreeGrid.tau(zone0, M);
-        System.out.println(tau);
         OctreeNode p = root;
         List<ConflictZonePairs> conflictZones = new ArrayList<>();
         // 祖辈冲突检测
@@ -115,7 +111,6 @@ public class OctreeSearcher {
         props.put("zids",zids_);
         props.put("zones",zones_);
         p.setProperties(props);
-        System.out.println(p.getProperties());;
 
         // 子辈冲突检测
         LinkedList<OctreeNode> Q = new LinkedList<>();
@@ -123,7 +118,6 @@ public class OctreeSearcher {
         while(!Q.isEmpty()){
             OctreeNode q = Q.removeFirst();
             if(q==null) continue;
-            System.out.println(q);
             Map<String, Object> propsQ = q.getProperties();
             conflictZones.addAll(checkLargeLargeConflict(propsQ,uavId,zone0));
             conflictZones.addAll(checkSmallLargeConflict(propsQ,uavId,zone0));
@@ -208,8 +202,6 @@ public class OctreeSearcher {
         }
         p.setOccupied(true);
         p.setProperties(propsP);
-        System.out.println(uavId);
-        System.out.println(p.getProperties());
     }
 
     public OctreeNode searchGrid(OctreeGrid grid){

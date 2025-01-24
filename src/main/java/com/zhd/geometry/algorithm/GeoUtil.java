@@ -26,15 +26,16 @@ public class GeoUtil {
         if(theta>Math.PI) theta=2*Math.PI-theta;
         boolean  visible=(phi<60*c) && (theta<80*c);
         double distance = getLength(relation);
-        boolean horizontal= Math.abs(vehicle.getVz())<=0.2;
+        boolean horizontal= Math.abs(vehicle.getVz())<=2;  // 0.2m/s ->2dm/s
         double speed = getLength(new Point3D(
                 vehicle.getVx(),vehicle.getVy(),vehicle.getVz()
         ));
+        // 8m -> 80dm , 3m -> 30dm , 0.5m/s ->5dm/s
         return 0.25*(
-                ((distance<8 && !horizontal)? 1:0) +
-                ((distance<8 && ! visible)?1:0) +
-                ((distance<3 && speed>0.5)?1:0) +
-                (distance<3?1:0)
+                ((distance<80 && !horizontal)? 1:0) +
+                ((distance<80 && ! visible)?1:0) +
+                ((distance<30 && speed>5)?1:0) +
+                (distance<30?1:0)
         );
     }
 
@@ -76,12 +77,13 @@ public class GeoUtil {
         return new Point3D[]{new Point3D(uavPosShape.getPx(),uavPosShape.getPy(),uavPosShape.getPz()),pMin,pMax};
     }
 
-    public static Zone recoverZone(UavPosShape self,Zone zone){
+    // self-dm,zone-m,R-0.1
+    public static Zone recoverZone(UavPosShape self,Zone zone,double R){
         Point3D[] boundingBox = recover(self);
         return new Zone(
-                new double[]{boundingBox[1].getX()-zone.getX()[0],boundingBox[2].getX()+zone.getX()[1]},
-                new double[]{boundingBox[1].getY()-zone.getY()[0],boundingBox[2].getY()+zone.getY()[1]},
-                new double[]{boundingBox[1].getZ()-zone.getZ()[0],boundingBox[2].getZ()+zone.getZ()[1]}
+                new double[]{boundingBox[1].getX()-zone.getX()[0]/R,boundingBox[2].getX()+zone.getX()[1]/R},
+                new double[]{boundingBox[1].getY()-zone.getY()[0]/R,boundingBox[2].getY()+zone.getY()[1]/R},
+                new double[]{boundingBox[1].getZ()-zone.getZ()[0]/R,boundingBox[2].getZ()+zone.getZ()[1]/R}
 
         );
     }
