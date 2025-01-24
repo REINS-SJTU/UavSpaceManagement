@@ -18,3 +18,4 @@ mappo:
 
 octree:
   M: 10
+  R: 0.1

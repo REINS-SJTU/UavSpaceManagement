@@ -29,9 +29,8 @@ public class CollisionDecider {
         List<Pair<String,OctreeGrid>> higherPriorityIds= new ArrayList<>();
         if(parent==null) return higherPriorityIds;
         String maxId = getMaxPriorityOfOctreeNode(parent, grid);
-        if(maxId==null) return higherPriorityIds;
         if(parent.isLeaf()){
-            higherPriorityIds.add(new Pair<>(maxId,grid));
+            if(maxId!=null)higherPriorityIds.add(new Pair<>(maxId,grid));
             return higherPriorityIds;
         }
 
@@ -39,18 +38,21 @@ public class CollisionDecider {
             OctreeNode child = parent.getKthChild(i);
             OctreeGrid subGrid = grid.getSubOctreeGrid(i, M);
             List<Pair<String,OctreeGrid>> ids2 = dfs(child, subGrid);
-            for(Pair<String,OctreeGrid> pair:ids2){
-                // 子优先级比父高，父挖块
-                if(id2Priority.get(pair.getKey())>id2Priority.get(maxId)){
-                    excludeGrid(maxId,pair.getValue());
-                    higherPriorityIds.add(pair);
-                }else{
-                    // 父优先级高，子挖块
-                    excludeGrid(pair.getKey(), pair.getValue());
+            if(maxId==null){
+                higherPriorityIds.addAll(ids2);
+            }else
+                for(Pair<String,OctreeGrid> pair:ids2){
+                    // 子优先级比父高，父挖块
+                    if(id2Priority.get(pair.getKey())>id2Priority.get(maxId)){
+                        excludeGrid(maxId,pair.getValue());
+                        higherPriorityIds.add(pair);
+                    }else{
+                        // 父优先级高，子挖块
+                        excludeGrid(pair.getKey(), pair.getValue());
+                    }
                 }
-            }
         }
-        higherPriorityIds.add(new Pair<>(maxId,grid));
+        if(maxId!=null) higherPriorityIds.add(new Pair<>(maxId,grid));
 
         return higherPriorityIds;
     }
@@ -79,8 +81,8 @@ public class CollisionDecider {
                     excludeGrid(maxId,grid);
                 }
                 maxId=id;
-            }else{
-                excludeGrid(id,grid);
+            }else {
+                if(!Objects.equals(id, maxId)) excludeGrid(id,grid);
             }
         }
         props.put("maxPriority",maxPriority);
