@@ -18,4 +18,9 @@ mappo:
 
 octree:
   M: 10
+
+motion:
   R: 0.1
+  a: 70
+  v: 140
+  t: 0.1

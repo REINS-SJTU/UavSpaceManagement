@@ -15,30 +15,6 @@ import java.util.List;
 public class GeoUtil {
 
 
-
-    public static double calculateFear(ObservationSelf vehicle, ObservationHuman human){
-        Point3D v=new Point3D(vehicle.getDx(),vehicle.getDy(),vehicle.getDz());
-        Point3D h=new Point3D(human.getDx(),human.getDy(),human.getDz());
-        Point3D relation = pointMinus(v, h);
-        double theta=Math.abs(getTheta(v)-getTheta(h));
-        double phi=Math.abs(getPhi(v)-getPhi(h));
-        double c = Math.PI/180;
-        if(theta>Math.PI) theta=2*Math.PI-theta;
-        boolean  visible=(phi<60*c) && (theta<80*c);
-        double distance = getLength(relation);
-        boolean horizontal= Math.abs(vehicle.getVz())<=2;  // 0.2m/s ->2dm/s
-        double speed = getLength(new Point3D(
-                vehicle.getVx(),vehicle.getVy(),vehicle.getVz()
-        ));
-        // 8m -> 80dm , 3m -> 30dm , 0.5m/s ->5dm/s
-        return 0.25*(
-                ((distance<80 && !horizontal)? 1:0) +
-                ((distance<80 && ! visible)?1:0) +
-                ((distance<30 && speed>5)?1:0) +
-                (distance<30?1:0)
-        );
-    }
-
     // 根据uav的pos和shape恢复到三维空间中的点，返回bounding box
     public static Point3D[] recover(UavPosShape uavPosShape){
         double [] xx = new double[]{uavPosShape.getXl(),uavPosShape.getXu()};
@@ -78,8 +54,8 @@ public class GeoUtil {
     }
 
     // self-dm,zone-m,R-0.1
-    public static Zone recoverZone(UavPosShape self,Zone zone,double R){
-        Point3D[] boundingBox = recover(self);
+    public static Zone recoverZone(Point3D[] boundingBox,Zone zone,double R){
+
         return new Zone(
                 new double[]{boundingBox[1].getX()-zone.getX()[0]/R,boundingBox[2].getX()+zone.getX()[1]/R},
                 new double[]{boundingBox[1].getY()-zone.getY()[0]/R,boundingBox[2].getY()+zone.getY()[1]/R},
