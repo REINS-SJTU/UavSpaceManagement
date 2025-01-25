@@ -5,13 +5,10 @@ import com.zhd.entity.HumanPosition;
 import com.zhd.entity.UavPosition;
 import com.zhd.entity.UavShape;
 import com.zhd.entity.tmp.*;
-import com.zhd.geometry.algorithm.CollisionDecider;
-import com.zhd.geometry.algorithm.OctreeSearcher;
+import com.zhd.geometry.algorithm.*;
 import com.zhd.geometry.structure.Octree;
 import com.zhd.geometry.structure.OctreeGrid;
 import com.zhd.geometry.structure.Point3D;
-import com.zhd.geometry.algorithm.GeoUtil;
-import com.zhd.geometry.algorithm.OctreeSpaceEncoder;
 import com.zhd.mapper.HumanPositionMapper;
 import com.zhd.mapper.UavPositionMapper;
 import com.zhd.mapper.UavShapeMapper;
@@ -24,6 +21,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -136,6 +136,7 @@ public class GeoServiceImpl implements GeoService {
         List<List<Double>> obs =new ArrayList<>();
         Map<String,Integer> id2Priority = new HashMap<>();
         for(UavPosShape uavPosShape:uavPosShapes){
+
             List<Double> thisObs = new ArrayList<>();
 
             // observation self
@@ -174,7 +175,7 @@ public class GeoServiceImpl implements GeoService {
             // observation human
             List<ObservationHuman> observationHumans = getObservationHumans(latestHumanPositions, positionSelf);
             for(ObservationHuman observationHuman:observationHumans){
-                observationHuman.setFear(GeoUtil.calculateFear(self,observationHuman));
+                observationHuman.setFear(MetricsCalculator.fear(self,observationHuman));
             }
             for(int i=0;i<6;i++){
                 if(i<observationHumans.size()){
@@ -197,11 +198,14 @@ public class GeoServiceImpl implements GeoService {
         //冲突检测， 得到网格块-Set<uavId>存在octree里(大-大冲突)
         Octree octree = new Octree(M);
         Map<String,DivisionPlan2> mp = new HashMap<>();
+        Map<String,Point3D[]> id2Box = new HashMap<>();
         for(int i=0;i<uavPosShapes.size();i++){
             UavPosShape self = uavPosShapes.get(i);
-            Zone zone = zones.get(i);
+            Point3D[] boundingBox = GeoUtil.recover(self);
+            id2Box.put(self.getUavId(),boundingBox);
             // 把zone恢复到空间坐标系中并且包含其占用的空间
-            zone=GeoUtil.recoverZone(self,zone,R);
+            Zone zone = zones.get(i);
+            zone=GeoUtil.recoverZone(boundingBox,zone,R);
 
             DivisionPlan2 dp=new DivisionPlan2(self.getUavId(),DivisionPlan2.zone2LargeArea(zone),new ArrayList<>());
             mp.put(self.getUavId(),dp);
@@ -236,6 +240,23 @@ public class GeoServiceImpl implements GeoService {
 
 
         mp = CollisionDecider.decideCollisionBasedOnPriority(mp, id2Priority, octree);
+
+
+
+        try{
+            File file = new File("./output/metrics.csv");
+            if(!file.exists()) file.createNewFile();
+            FileWriter fw=new FileWriter(file.getPath(),true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(ts+","+
+                    MetricsCalculator.avgMaxReachableRate(mp,id2Box,M,constantValues.v,constantValues.t)+","+
+                    MetricsCalculator.occupancy(mp,M));
+            bw.newLine();
+            bw.flush();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        ;
 
         List<DivisionPlan2> result = new ArrayList<>();
         for(String key:mp.keySet()){
