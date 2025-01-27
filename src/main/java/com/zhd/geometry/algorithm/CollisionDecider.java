@@ -6,6 +6,7 @@ import com.zhd.geometry.structure.OctreeGrid;
 import com.zhd.geometry.structure.OctreeNode;
 import com.zhd.geometry.structure.Point3D;
 import javafx.util.Pair;
+import lombok.Data;
 
 
 import java.util.*;
@@ -18,6 +19,7 @@ public class CollisionDecider {
     private static int M=10;
 //    private static List<OctreeGrid> nodes;
 
+
     public static Map<String, DivisionPlan2> decideCollisionBasedOnPriority(Map<String,DivisionPlan2> mp_, Map<String,Integer> id2Priority_, Octree octree){
         M=octree.getM();
         id2Priority=id2Priority_;
@@ -25,10 +27,14 @@ public class CollisionDecider {
 
 //        nodes=new ArrayList<>();
 //        OctreeNode p = octree.getRoot();
-//        OctreeGrid testGrid = new OctreeGrid(930, 554, 96, 10);
+//        OctreeGrid testGrid = new OctreeGrid(664, 280, 48, 9);
 //        for(int i=1;i<=M;i++){
 //            OctreeGrid newGrid = new OctreeGrid(testGrid.getX() >> i << i, testGrid.getY() >> i << i, testGrid.getZ() >> i << i, M - i);
 //            nodes.add(newGrid);
+//        }
+//        for(int i=0;i<8;i++) {
+//            OctreeGrid subOctreeGrid = testGrid.getSubOctreeGrid(i, M);
+//            if(subOctreeGrid!=null)nodes.add(subOctreeGrid);
 //        }
 
         dfs(octree.getRoot(), new OctreeGrid(0, 0, 0, 0),null);
@@ -38,7 +44,8 @@ public class CollisionDecider {
     private static List<Pair<String,OctreeGrid>> dfs(OctreeNode parent, OctreeGrid grid,String smallOcpId){
 //        boolean t=false;
 //        if(nodes.contains(grid)){
-//            System.out.println("its parent "+grid+":"+parent.getProperties()+","+smallOcpId);
+//            if(parent!=null)
+//                System.out.println("its parent "+grid+":"+parent.getProperties()+","+smallOcpId);
 //            t=true;
 //        }
         List<Pair<String,OctreeGrid>> higherPriorityIds=new ArrayList<>();
@@ -62,6 +69,7 @@ public class CollisionDecider {
                 OctreeGrid subGrid = grid.getSubOctreeGrid(i, M);
                 dfs(child,subGrid,smallOcpId2);
             }
+            higherPriorityIds.add(new Pair<>("[SMALL]"+smallOcpId2,grid));
             return higherPriorityIds;
         }
         if(parent.isLeaf()){
@@ -69,28 +77,99 @@ public class CollisionDecider {
             return higherPriorityIds;
         }
 
+        Set<String> currentNodeIdSet = getConflictIdSet(parent, grid);
+        List<Pair<String,OctreeGrid>> L = new ArrayList<>();
         for(int i=0;i<8;i++){
             OctreeNode child = parent.getKthChild(i);
             OctreeGrid subGrid = grid.getSubOctreeGrid(i, M);
             List<Pair<String,OctreeGrid>> ids2 = dfs(child, subGrid,null);
-            if(maxId==null){
-                higherPriorityIds.addAll(ids2);
-            }else
-                for(Pair<String,OctreeGrid> pair:ids2){
-                    // 子优先级比父高，父挖块
-                    if(id2Priority.get(pair.getKey())>id2Priority.get(maxId)){
-//                        System.out.println("Exclude (1) "+maxId);
-                        excludeGrid(maxId,pair.getValue());
-                        higherPriorityIds.add(pair);
-                    }else{
-                        // 父优先级高，子挖块
-//                        System.out.println("Exclude (2) "+pair.getKey());
-                        excludeGrid(pair.getKey(), pair.getValue());
+            L.addAll(ids2);
+//            if(maxId==null){
+//                higherPriorityIds.addAll(ids2);
+//            }else {
+//                for (Pair<String, OctreeGrid> pair : ids2) {
+//                    // 子优先级比父高，父挖块
+//                    if ("SMALL".equals(pair.getKey()) || id2Priority.get(pair.getKey()) > id2Priority.get(maxId)) {
+//                        if ("vehicle/10008".equals(pair.getKey()) && grid.equals(new OctreeGrid(664, 280, 48, 9)))
+//                            System.out.println("Exclude (1)" + maxId + "," + pair.getValue());
+//                        excludeGrid(maxId, pair.getValue());
+//                        higherPriorityIds.add(pair);
+//                    } else {
+//                        // 父优先级高，子挖块
+//                        if ("vehicle/10008".equals(pair.getKey()) && grid.equals(new OctreeGrid(664, 280, 48, 9)))
+//                            System.out.println("Exclude (2)" + pair.getKey() + "," + pair.getValue());
+//                        excludeGrid(pair.getKey(), pair.getValue());
+//                    }
+//                }
+//            }
+        }
+
+        return comparePriority(currentNodeIdSet,grid,L);
+    }
+
+    private static List<Pair<String,OctreeGrid>> comparePriority(Set<String> currentNodeIdSet,OctreeGrid grid,List<Pair<String,OctreeGrid>> L){
+        List<Pair<String,OctreeGrid>> higherPriorityIds=new ArrayList<>();
+
+        Set<String> smallIds = new HashSet<>();
+        if(currentNodeIdSet!=null)
+            for(Pair<String,OctreeGrid> p:L){
+                String idP = p.getKey();
+                OctreeGrid gridP = p.getValue();
+                if(idP.startsWith("[SMALL]")){
+                    String smallId = idP.substring("[SMALL]".length());
+                    smallIds.add(smallId);
+                    for(String idC:currentNodeIdSet){
+                        if(!Objects.equals(smallId,idC)) excludeGrid(idC,gridP);
                     }
                 }
+            }
+
+        String maxId=null;
+        Integer maxPriority=-1;
+        if(currentNodeIdSet!=null)
+            for(String idC:currentNodeIdSet){
+                Integer priority = id2Priority.get(idC);
+                if(maxId==null) {
+                    maxId=idC;
+                    maxPriority=priority;
+                }else if(maxPriority<priority){
+//                    if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(664, 280, 48, 9)))
+//                            System.out.println("Exclude (1)" + maxId + "," + grid);
+                    excludeGrid(maxId,grid);
+                    maxId=idC; maxPriority=priority;
+                }else{
+//                    if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(664, 280, 48, 9)))
+//                            System.out.println("Exclude (2)" + idC + "," + grid);
+                    if(!smallIds.contains(idC))excludeGrid(idC,grid);
+                }
+            }
+
+        for(Pair<String,OctreeGrid> p: L){
+            String idP = p.getKey();
+            OctreeGrid gridP = p.getValue();
+            if(idP.startsWith("[SMALL]")) continue;
+            if(id2Priority.get(idP)>maxPriority){
+                if(maxId!=null) excludeGrid(maxId,gridP);
+                higherPriorityIds.add(new Pair<>(idP,gridP));
+            }else{
+                excludeGrid(idP,gridP);
+            }
         }
         if(maxId!=null) higherPriorityIds.add(new Pair<>(maxId,grid));
-
+//        for (Pair<String, OctreeGrid> pair : ids2) {
+//                    // 子优先级比父高，父挖块
+//                    if ("SMALL".equals(pair.getKey()) || id2Priority.get(pair.getKey()) > id2Priority.get(maxId)) {
+//                        if ("vehicle/10008".equals(pair.getKey()) && grid.equals(new OctreeGrid(664, 280, 48, 9)))
+//                            System.out.println("Exclude (1)" + maxId + "," + pair.getValue());
+//                        excludeGrid(maxId, pair.getValue());
+//                        higherPriorityIds.add(pair);
+//                    } else {
+//                        // 父优先级高，子挖块
+//                        if ("vehicle/10008".equals(pair.getKey()) && grid.equals(new OctreeGrid(664, 280, 48, 9)))
+//                            System.out.println("Exclude (2)" + pair.getKey() + "," + pair.getValue());
+//                        excludeGrid(pair.getKey(), pair.getValue());
+//                    }
+//                }
         return higherPriorityIds;
     }
 
@@ -115,21 +194,24 @@ public class CollisionDecider {
         }
     }
 
-    // 做同结点的id之间的优先级筛选，选出优先级最高的，去掉其他
+    private static Set<String> getConflictIdSet(OctreeNode node,OctreeGrid grid){
+        Map<String, Object> props = node.getProperties();
+        if (props==null) return null;
+        if(!props.containsKey("conflictIdSet")) return null;
+        return (Set<String>) props.get("conflictIdSet");
+    }
+
+    // 做同结点的id之间的优先级筛选，选出优先级最高的
     private static String getMaxPriorityOfOctreeNode(OctreeNode node,OctreeGrid grid){
         Map<String, Object> props = node.getProperties();
         if (props==null) return null;
         if(!props.containsKey("conflictIdSet")) return props.containsKey("small")?"SMALL":null;
         Set<String> s = (Set<String>) props.get("conflictIdSet");
-//        if(grid.equals(new OctreeGrid(930,554,96,10))){
-//            System.out.println(grid+" is searched.");
-//            System.out.println(props);
-//        }
         if(props.containsKey("small")){
-            String smallId = (String) props.get("small");
-            for(String id:s){
-                if(!Objects.equals(id,smallId)) excludeGrid(id,grid);
-            }
+//            String smallId = (String) props.get("small");
+//            for(String id:s){
+//                if(!Objects.equals(id,smallId)) excludeGrid(id,grid);
+//            }
             return "SMALL";
         }
         int maxPriority=-1;
@@ -138,23 +220,21 @@ public class CollisionDecider {
             int priority = id2Priority.get(id);
             if(maxPriority<priority){
                 maxPriority=priority;
-                if(maxId!=null) {
-//                    System.out.println("Exclude (3) "+maxId);
-                    excludeGrid(maxId,grid);
-                }
+//                if(maxId!=null) {
+////                    System.out.println("Exclude (3) "+maxId);
+//                    if("vehicle/10008".equals(id)&&grid.equals(new OctreeGrid(664,280,48,9))) System.out.println("Exclude (3)"+maxId+","+grid);
+//                    excludeGrid(maxId,grid);
+//                }
                 maxId=id;
-            }else {
-                if(!Objects.equals(id, maxId)) {
-//                    System.out.println("Exclude (4) "+id+","+maxId);
-//                    if("vehicle/10009".equals(id)) System.out.println("exclude "+id+","+grid);
-                    // grid.equals(new OctreeGrid(930,554,96,10))  (x=930, y=554, z=96, k=10)
-                    excludeGrid(id,grid);
-                }
             }
+//            else {
+//                if(!Objects.equals(id, maxId)) {
+//                    if("vehicle/10008".equals(id)&&grid.equals(new OctreeGrid(664,280,48,9))) System.out.println("Exclude (4)"+id+","+grid);
+//                    // grid.equals(new OctreeGrid(664,280,48,9))  (x=930, y=554, z=96, k=10)
+//                    excludeGrid(id,grid);
+//                }
+//            }
         }
-        props.put("maxPriority",maxPriority);
-        props.put("maxPriorityId",maxId);
-        node.setProperties(props);
         return maxId;
     }
 
