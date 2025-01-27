@@ -151,7 +151,7 @@ public class GeoServiceImpl implements GeoService {
             thisObs.add(Math.abs(self.getV())<=0.001?0.001:(self.getVz()/self.getV()));
             thisObs.add(R*self.getV());
             thisObs.add(1.0*self.getPriority());
-            id2Priority.put(uavPosShape.getUavId(),self.getPriority());
+            id2Priority.put(uavPosShape.getUavId(),Integer.parseInt(uavPosShape.getUavId().substring(9)));
 
             // observation vehicles
             List<ObservationVehicle> observationVehicles = getObservationVehicles(latestUavPositions, positionSelf);
@@ -199,20 +199,24 @@ public class GeoServiceImpl implements GeoService {
         Octree octree = new Octree(M);
         Map<String,DivisionPlan2> mp = new HashMap<>();
         Map<String,Point3D[]> id2Box = new HashMap<>();
-        for(int i=0;i<uavPosShapes.size();i++){
+        for(int i=0;i<uavPosShapes.size();i++) {
             UavPosShape self = uavPosShapes.get(i);
             Point3D[] boundingBox = GeoUtil.recover(self);
-            id2Box.put(self.getUavId(),boundingBox);
+            id2Box.put(self.getUavId(), boundingBox);
             List<OctreeGrid> smallGrids = OctreeSpaceEncoder.encodeWithBoundingBox(boundingBox[0], boundingBox[1], boundingBox[2]);
-            for(OctreeGrid grid:smallGrids){
+            for (OctreeGrid grid : smallGrids) {
                 Map<String, Object> props = new HashMap<>();
                 props.put("small", self.getUavId());
                 octree.insertWithProperties(grid, props);
             }
+        }
 
 
+        for(int i=0;i<uavPosShapes.size();i++) {
             // 把zone恢复到空间坐标系中并且包含其占用的空间
+            UavPosShape self = uavPosShapes.get(i);
             Zone zone = zones.get(i);
+            Point3D[] boundingBox = id2Box.get(self.getUavId());
             zone=GeoUtil.recoverZone(boundingBox,zone,R);
 
             DivisionPlan2 dp=new DivisionPlan2(self.getUavId(),DivisionPlan2.zone2LargeArea(zone),new ArrayList<>());
@@ -267,7 +271,16 @@ public class GeoServiceImpl implements GeoService {
         ;
 
         List<DivisionPlan2> result = new ArrayList<>();
+        System.out.println("======== check Rmin is excluded==========");
         for(String key:mp.keySet()){
+            List<OctreeGrid> exclude = mp.get(key).getExclude();
+            Point3D[] box = id2Box.get(key);
+            for(OctreeGrid grid:exclude){
+                boolean inside = OctreeSpaceEncoder.isInsideBoundingBox(grid, box[2], box[1]);
+                if(inside){
+                    System.out.println("RminExcluded,"+key+","+grid);
+                }
+            }
             result.add(mp.get(key));
         }
 

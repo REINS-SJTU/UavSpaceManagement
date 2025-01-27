@@ -67,7 +67,7 @@ public class Octree {
                         s.addAll((Set)prop.get(key));
                         props.replace(key,s);
                     }
-                    // Long和String视为id 不合并
+                    // Long和String视为id 不合并，直接覆盖
                 }else props.put(key,prop.get(key));
             }
             p.setProperties(props);
@@ -79,10 +79,9 @@ public class Octree {
         for(int i=1;i<= grid.getK();i++){
             int octreeNumber = grid.getOctreeNumber(i, M);
             OctreeNode q = p.getKthChild(octreeNumber);
-            if(q!=null&&q.isOccupied()) return q.getProperties();
             if(q==null) return null;
             p=q;
         }
-        return null;
+        return p.getProperties();
     }
 }
