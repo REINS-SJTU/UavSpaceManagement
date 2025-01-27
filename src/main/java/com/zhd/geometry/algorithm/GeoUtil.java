@@ -57,9 +57,18 @@ public class GeoUtil {
     public static Zone recoverZone(Point3D[] boundingBox,Zone zone,double R){
 
         return new Zone(
-                new double[]{boundingBox[1].getX()-zone.getX()[0]/R,boundingBox[2].getX()+zone.getX()[1]/R},
-                new double[]{boundingBox[1].getY()-zone.getY()[0]/R,boundingBox[2].getY()+zone.getY()[1]/R},
-                new double[]{boundingBox[1].getZ()-zone.getZ()[0]/R,boundingBox[2].getZ()+zone.getZ()[1]/R}
+                new double[]{
+                        Math.ceil(boundingBox[1].getX()-zone.getX()[0]/R),
+                        Math.floor(boundingBox[2].getX()+zone.getX()[1]/R)
+                },
+                new double[]{
+                        Math.ceil(boundingBox[1].getY()-zone.getY()[0]/R),
+                        Math.floor(boundingBox[2].getY()+zone.getY()[1]/R)
+                },
+                new double[]{
+                        Math.ceil(boundingBox[1].getZ()-zone.getZ()[0]/R),
+                        Math.floor(boundingBox[2].getZ()+zone.getZ()[1]/R)
+                }
 
         );
     }

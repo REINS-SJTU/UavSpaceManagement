@@ -203,6 +203,14 @@ public class GeoServiceImpl implements GeoService {
             UavPosShape self = uavPosShapes.get(i);
             Point3D[] boundingBox = GeoUtil.recover(self);
             id2Box.put(self.getUavId(),boundingBox);
+            List<OctreeGrid> smallGrids = OctreeSpaceEncoder.encodeWithBoundingBox(boundingBox[0], boundingBox[1], boundingBox[2]);
+            for(OctreeGrid grid:smallGrids){
+                Map<String, Object> props = new HashMap<>();
+                props.put("small", self.getUavId());
+                octree.insertWithProperties(grid, props);
+            }
+
+
             // 把zone恢复到空间坐标系中并且包含其占用的空间
             Zone zone = zones.get(i);
             zone=GeoUtil.recoverZone(boundingBox,zone,R);
