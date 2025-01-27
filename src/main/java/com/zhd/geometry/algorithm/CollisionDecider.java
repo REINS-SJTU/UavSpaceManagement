@@ -26,7 +26,8 @@ public class CollisionDecider {
     }
 
     private static List<Pair<String,OctreeGrid>> dfs(OctreeNode parent, OctreeGrid grid){
-        List<Pair<String,OctreeGrid>> higherPriorityIds= new ArrayList<>();
+
+        List<Pair<String,OctreeGrid>> higherPriorityIds=new ArrayList<>();
         if(parent==null) return higherPriorityIds;
         String maxId = getMaxPriorityOfOctreeNode(parent, grid);
         if(parent.isLeaf()){
@@ -44,10 +45,12 @@ public class CollisionDecider {
                 for(Pair<String,OctreeGrid> pair:ids2){
                     // 子优先级比父高，父挖块
                     if(id2Priority.get(pair.getKey())>id2Priority.get(maxId)){
+//                        System.out.println("Exclude (1) "+maxId);
                         excludeGrid(maxId,pair.getValue());
                         higherPriorityIds.add(pair);
                     }else{
                         // 父优先级高，子挖块
+//                        System.out.println("Exclude (2) "+pair.getKey());
                         excludeGrid(pair.getKey(), pair.getValue());
                     }
                 }
@@ -58,6 +61,7 @@ public class CollisionDecider {
     }
 
     private static void excludeGrid(String id,OctreeGrid grid){
+        if(!mp.containsKey(id)) return;
         DivisionPlan2 divisionPlan2 = mp.get(id);
         List<OctreeGrid> exclude = divisionPlan2.getExclude();
         if(exclude==null)exclude=new ArrayList<>();
@@ -69,8 +73,16 @@ public class CollisionDecider {
     // 做同结点的id之间的优先级筛选，选出优先级最高的，去掉其他
     private static String getMaxPriorityOfOctreeNode(OctreeNode node,OctreeGrid grid){
         Map<String, Object> props = node.getProperties();
-        if (props==null|| !props.containsKey("conflictIdSet")) return null;
+        if (props==null) return null;
+        if(!props.containsKey("conflictIdSet")) return null;
         Set<String> s = (Set<String>) props.get("conflictIdSet");
+        if(props.containsKey("small")){
+            String smallId = (String) props.get("small");
+            for(String id:s){
+                if(!Objects.equals(id,smallId)) excludeGrid(id,grid);
+            }
+            return null;
+        }
         int maxPriority=-1;
         String maxId=null;
         for(String id:s){
@@ -78,11 +90,15 @@ public class CollisionDecider {
             if(maxPriority<priority){
                 maxPriority=priority;
                 if(maxId!=null) {
+//                    System.out.println("Exclude (3) "+maxId);
                     excludeGrid(maxId,grid);
                 }
                 maxId=id;
             }else {
-                if(!Objects.equals(id, maxId)) excludeGrid(id,grid);
+                if(!Objects.equals(id, maxId)) {
+//                    System.out.println("Exclude (4) "+id+","+maxId);
+                    excludeGrid(id,grid);
+                }
             }
         }
         props.put("maxPriority",maxPriority);
