@@ -62,13 +62,13 @@ public class OctreeSpaceEncoder {
         return result;
     }
 
-    private static boolean isInsideBoundingBox(OctreeGrid grid,Point3D pMax,Point3D pMin){
+    public static boolean isInsideBoundingBox(OctreeGrid grid,Point3D pMax,Point3D pMin){
         Point3D pl = getGridLowerBound(grid);
         Point3D pu = getGridUpperBound(grid);
         return Point3D.smallerOrEqual(pu,pMax) && Point3D.smallerOrEqual(pMin,pl);
     }
 
-    private static boolean isOutsideBoundingBox(OctreeGrid grid,Point3D pMax,Point3D pMin){
+    public static boolean isOutsideBoundingBox(OctreeGrid grid,Point3D pMax,Point3D pMin){
         Point3D pl = getGridLowerBound(grid);
         Point3D pu = getGridUpperBound(grid);
         return pu.getX()<pMin.getX() || pl.getX()>pMax.getX()
