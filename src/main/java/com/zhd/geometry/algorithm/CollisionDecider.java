@@ -17,7 +17,7 @@ public class CollisionDecider {
     private static Map<String,Integer> id2Priority;
     private static Map<String,DivisionPlan2> mp;
     private static int M=10;
-    private static List<OctreeGrid> nodes;
+//    private static List<OctreeGrid> nodes;
 
 
     public static Map<String, DivisionPlan2> decideCollisionBasedOnPriority(Map<String,DivisionPlan2> mp_, Map<String,Integer> id2Priority_, Octree octree){
@@ -142,8 +142,8 @@ public class CollisionDecider {
                     smallIds.add(smallId);
                     for(String idC:currentNodeIdSet){
                         if(!Objects.equals(smallId,idC)) {
-                            if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
-                                System.out.println("Exclude (3)" + idC + "," + grid);
+//                            if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
+//                                System.out.println("Exclude (3)" + idC + "," + grid);
                             excludeGrid(idC,gridP);
                         }
                     }
