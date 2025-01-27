@@ -277,18 +277,20 @@ public class GeoServiceImpl implements GeoService {
         ;
 
         List<DivisionPlan2> result = new ArrayList<>();
-        System.out.println("======== check Rmin is excluded==========");
+        System.out.println("======== check Rmin is excluded ["+ts+"]==========");
         for(String key:mp.keySet()){
             List<OctreeGrid> exclude = mp.get(key).getExclude();
             Point3D[] box = id2Box.get(key);
             for(OctreeGrid grid:exclude){
-                boolean inside = OctreeSpaceEncoder.isInsideBoundingBox(grid, box[2], box[1]);
-                if(inside){
-                    System.out.println("RminExcluded,"+key+","+grid);
+                boolean outside = OctreeSpaceEncoder.isOutsideBoundingBox(grid, box[2], box[1]);
+                if(!outside){
+//                    if(grid.equals(new OctreeGrid(664,280,48,9)))
+                        System.out.println("RminExcluded,"+key+","+grid);
                 }
             }
             result.add(mp.get(key));
         }
+
 
         return result;
     }
