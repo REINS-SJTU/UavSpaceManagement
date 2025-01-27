@@ -135,6 +135,11 @@ public class GeoServiceImpl implements GeoService {
         // 计算obs
         List<List<Double>> obs =new ArrayList<>();
         Map<String,Integer> id2Priority = new HashMap<>();
+        for(UavPosition uavPosition:latestUavPositions){
+            id2Priority.put(uavPosition.getUavId(), Integer.parseInt((uavPosition.getUavId().substring(9))));
+        }
+
+
         for(UavPosShape uavPosShape:uavPosShapes){
 
             List<Double> thisObs = new ArrayList<>();
@@ -151,7 +156,6 @@ public class GeoServiceImpl implements GeoService {
             thisObs.add(Math.abs(self.getV())<=0.001?0.001:(self.getVz()/self.getV()));
             thisObs.add(R*self.getV());
             thisObs.add(1.0*self.getPriority());
-            id2Priority.put(uavPosShape.getUavId(),self.getPriority());
 
             // observation vehicles
             List<ObservationVehicle> observationVehicles = getObservationVehicles(latestUavPositions, positionSelf);
