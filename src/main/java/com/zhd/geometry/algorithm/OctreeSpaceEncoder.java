@@ -71,9 +71,9 @@ public class OctreeSpaceEncoder {
     public static boolean isOutsideBoundingBox(OctreeGrid grid,Point3D pMax,Point3D pMin){
         Point3D pl = getGridLowerBound(grid);
         Point3D pu = getGridUpperBound(grid);
-        return pu.getX()<pMin.getX() || pl.getX()>pMax.getX()
-                || pu.getY()<pMin.getY() || pl.getY()>pMax.getY()
-                || pu.getZ()<pMin.getZ() || pl.getZ()>pMax.getZ();
+        return pu.getX()<=pMin.getX() || pl.getX()>=pMax.getX()
+                || pu.getY()<=pMin.getY() || pl.getY()>=pMax.getY()
+                || pu.getZ()<=pMin.getZ() || pl.getZ()>=pMax.getZ();
     }
 
     // grid的0-7哪块和bounding box 冲突了

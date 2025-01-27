@@ -284,8 +284,8 @@ public class GeoServiceImpl implements GeoService {
             for(OctreeGrid grid:exclude){
                 boolean outside = OctreeSpaceEncoder.isOutsideBoundingBox(grid, box[2], box[1]);
                 if(!outside){
-//                    if(grid.equals(new OctreeGrid(664,280,48,9)))
-                        System.out.println("RminExcluded,"+key+","+grid);
+//                    if(grid.equals(new OctreeGrid(658, 280, 60, 9)))
+                        System.out.println("RminExcluded,"+key+","+grid+","+box[2]+","+box[1]);
                 }
             }
             result.add(mp.get(key));

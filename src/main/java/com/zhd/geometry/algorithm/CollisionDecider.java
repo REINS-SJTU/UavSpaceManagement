@@ -27,7 +27,7 @@ public class CollisionDecider {
 
 //        nodes=new ArrayList<>();
 //        OctreeNode p = octree.getRoot();
-//        OctreeGrid testGrid = new OctreeGrid(664, 280, 48, 9);
+//        OctreeGrid testGrid = new OctreeGrid(658, 280, 60, 9);
 //        for(int i=1;i<=M;i++){
 //            OctreeGrid newGrid = new OctreeGrid(testGrid.getX() >> i << i, testGrid.getY() >> i << i, testGrid.getZ() >> i << i, M - i);
 //            nodes.add(newGrid);
@@ -46,6 +46,10 @@ public class CollisionDecider {
 //        if(nodes.contains(grid)){
 //            if(parent!=null)
 //                System.out.println("its parent "+grid+":"+parent.getProperties()+","+smallOcpId);
+//            t=true;
+//        }
+//        if(new OctreeGrid(658, 280, 60, 9).equals(grid)){
+//            System.out.println("Find Grid"+grid+",node is"+parent+", SMALL="+smallOcpId);
 //            t=true;
 //        }
         List<Pair<String,OctreeGrid>> higherPriorityIds=new ArrayList<>();
@@ -73,8 +77,26 @@ public class CollisionDecider {
             return higherPriorityIds;
         }
         if(parent.isLeaf()){
-            if(maxId!=null)higherPriorityIds.add(new Pair<>(maxId,grid));
-            return higherPriorityIds;
+
+//            if(maxId!=null)higherPriorityIds.add(new Pair<>(maxId,grid));
+//            return higherPriorityIds;
+
+            List<Pair<String, OctreeGrid>> result = comparePriority(getConflictIdSet(parent, grid), grid, new ArrayList<>());
+//            if(t) for(int i=0;i<result.size();i++) System.out.println(result.get(i).getKey()+","+result.get(i).getValue());
+            return result ;
+
+//            Set<String> conflictIdSet = getConflictIdSet(parent, grid);
+//            if(conflictIdSet==null||conflictIdSet.isEmpty()||maxId==null) return higherPriorityIds;
+//            for(String idC: conflictIdSet){
+//                if(id2Priority.get(idC)>id2Priority.get(maxId)){
+//                    excludeGrid(maxId,grid);
+//                    maxId=idC;
+//                }else{
+//                    excludeGrid(idC,grid);
+//                }
+//            }
+//            higherPriorityIds.add(new Pair<>(maxId,grid));
+//            return higherPriorityIds;
         }
 
         Set<String> currentNodeIdSet = getConflictIdSet(parent, grid);
@@ -119,11 +141,16 @@ public class CollisionDecider {
                     String smallId = idP.substring("[SMALL]".length());
                     smallIds.add(smallId);
                     for(String idC:currentNodeIdSet){
-                        if(!Objects.equals(smallId,idC)) excludeGrid(idC,gridP);
+                        if(!Objects.equals(smallId,idC)) {
+//                            if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
+//                                System.out.println("Exclude (3)" + idC + "," + grid);
+                            excludeGrid(idC,gridP);
+                        }
                     }
                 }
             }
 
+//        if(!smallIds.isEmpty()&&grid.equals(new OctreeGrid(658, 280, 60, 9))) System.out.println("Small Id Sets:"+smallIds);
         String maxId=null;
         Integer maxPriority=-1;
         if(currentNodeIdSet!=null)
@@ -133,14 +160,16 @@ public class CollisionDecider {
                     maxId=idC;
                     maxPriority=priority;
                 }else if(maxPriority<priority){
-//                    if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(664, 280, 48, 9)))
+//                    if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
 //                            System.out.println("Exclude (1)" + maxId + "," + grid);
                     excludeGrid(maxId,grid);
                     maxId=idC; maxPriority=priority;
                 }else{
-//                    if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(664, 280, 48, 9)))
+                    if(!smallIds.contains(idC)) {
+//                        if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
 //                            System.out.println("Exclude (2)" + idC + "," + grid);
-                    if(!smallIds.contains(idC))excludeGrid(idC,grid);
+                        excludeGrid(idC,grid);
+                    }
                 }
             }
 
@@ -190,6 +219,8 @@ public class CollisionDecider {
         if(s==null) return ;
         for(String id:s){
             if(Objects.equals(smallId,id)) continue;
+//            if ("vehicle/10008".equals(id) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
+//                System.out.println("Exclude (4)" + id + "," + grid);
             excludeGrid(id,grid);
         }
     }
