@@ -273,6 +273,8 @@ public class GeoServiceImpl implements GeoService {
 
         // 924,558,90, 9   10009 exclude Rmin
 
+        // x=342, y=322, z=80, k=9
+
 
 //        System.out.println("============Check Output.txt 8 & 45 =============");
 //        try {
