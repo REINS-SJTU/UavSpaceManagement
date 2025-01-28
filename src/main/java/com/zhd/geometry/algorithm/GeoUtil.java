@@ -14,7 +14,7 @@ public class GeoUtil {
 
     // 只考虑一层的
     public static List<OctreeGrid> excludeChildrenGrid(OctreeGrid father, Set<OctreeGrid> excludedChildren,int M){
-//        System.out.println("excludeChildrenGrid: father "+father+",exclude "+excludedChildren);
+//        if(new OctreeGrid(340, 300, 84, 8).equals(father))System.out.println("excludeChildrenGrid: father "+father+",exclude "+excludedChildren);
         List<OctreeGrid> L = new ArrayList<>();
         if(excludedChildren==null||excludedChildren.isEmpty()){
             L.add(father);
@@ -52,8 +52,11 @@ public class GeoUtil {
                 }
         }
 
-//        System.out.println("Result is ");
-//        for (OctreeGrid g: L) System.out.println(g);
+//        if(new OctreeGrid(340, 300, 84, 8).equals(father)){
+//            System.out.println("Result is ");
+//            for (OctreeGrid g: L) System.out.println(g);
+//        }
+
         return L;
     }
 

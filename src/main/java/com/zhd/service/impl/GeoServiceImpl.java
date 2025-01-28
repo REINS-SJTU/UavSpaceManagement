@@ -241,7 +241,8 @@ public class GeoServiceImpl implements GeoService {
                         props.put("conflictIdSet", s);
                         octree.insertWithProperties(grid, props);
                     }
-                }else if(pairs.getType()==2){
+                }
+                else if(pairs.getType()==2){
                     // 大-小冲突
                     DivisionPlan2 divisionPlan2 = mp.get(self.getUavId());
                     if(divisionPlan2==null){
@@ -267,9 +268,8 @@ public class GeoServiceImpl implements GeoService {
         // x=671, y=280, z=43, k=10  都没被exclude -》 8 exclude掉了
         // x=670, y=280, z=42, k=9  都没被exclude
         // x=670, y=281, z=42, k=10  45 excludes 掉了
-//        OctreeGrid g = new OctreeGrid(671, 280, 43, 10);
-//        for(OctreeGrid grid:exclude1) if(OctreeSpaceEncoder.isInsideBoundingBox(g,grid)) System.out.println("10008 has.");
-//        for(OctreeGrid grid:exclude2) if(OctreeSpaceEncoder.isInsideBoundingBox(g,grid)) System.out.println("10045 has.");
+
+        // [10041] x=340, y=300, z=84, k=8
 
         // 924,558,90, 9   10009 exclude Rmin
 
@@ -295,19 +295,19 @@ public class GeoServiceImpl implements GeoService {
 //        }
 
 
-        try{
-            File file = new File("./output/metrics.csv");
-            if(!file.exists()) file.createNewFile();
-            FileWriter fw=new FileWriter(file.getPath(),true);
-            BufferedWriter bw = new BufferedWriter(fw);
-            bw.write(ts+","+
-                    MetricsCalculator.avgMaxReachableRate(mp,id2Box,M,constantValues.v,constantValues.t)+","+
-                    MetricsCalculator.occupancy(mp,M));
-            bw.newLine();
-            bw.flush();
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+//        try{
+//            File file = new File("./output/metrics.csv");
+//            if(!file.exists()) file.createNewFile();
+//            FileWriter fw=new FileWriter(file.getPath(),true);
+//            BufferedWriter bw = new BufferedWriter(fw);
+//            bw.write(ts+","+
+//                    MetricsCalculator.avgMaxReachableRate(mp,id2Box,M,constantValues.v,constantValues.t)+","+
+//                    MetricsCalculator.occupancy(mp,M));
+//            bw.newLine();
+//            bw.flush();
+//        } catch (Exception e){
+//            e.printStackTrace();
+//        }
         ;
 
         List<DivisionPlan2> result = new ArrayList<>();
