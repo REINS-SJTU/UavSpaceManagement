@@ -27,7 +27,7 @@ public class CollisionDecider {
 
 //        nodes=new ArrayList<>();
 //        OctreeNode p = octree.getRoot();
-//        OctreeGrid testGrid = new OctreeGrid(670, 280, 42, 9);
+//        OctreeGrid testGrid = new OctreeGrid(340, 300, 84, 8);
 //        for(int i=1;i<=M;i++){
 //            OctreeGrid newGrid = new OctreeGrid(testGrid.getX() >> i << i, testGrid.getY() >> i << i, testGrid.getZ() >> i << i, M - i);
 //            nodes.add(newGrid);
@@ -125,7 +125,7 @@ public class CollisionDecider {
 //            }
         }
 
-//        if(t&&grid.equals(new OctreeGrid(670, 280, 42, 9))) {
+//        if(t&&grid.equals(new OctreeGrid(340, 300, 84, 8))) {
 //            List<Pair<String, OctreeGrid>> pairs = comparePriority(currentNodeIdSet, grid, L);
 //            for(Pair p:pairs) System.out.println("Compare Priority Result:"+p.getKey()+","+p.getValue());
 //        }
@@ -153,15 +153,15 @@ public class CollisionDecider {
                     if(currentNodeIdSet!=null)
                         for(String idC:currentNodeIdSet){
                             if(!Objects.equals(smallId,idC)) {
-//                                if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(670, 280, 42, 9)))
-//                                    System.out.println("Exclude (3)" + idC + "," + gridP);
+//                                if ("vehicle/10041".equals(idC) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                                    System.out.println("Exclude (1)" + idC + "," + gridP);
                                 excludeGrid(idC,gridP);
                             }
                         }
                 }
         }
 
-//        if(!smallIds.isEmpty()&&grid.equals(new OctreeGrid(924,558,90, 9))) System.out.println("Small Id Sets:"+smallIds);
+//        if(!smallIds.isEmpty()&&grid.equals(new OctreeGrid(340, 300, 84, 8))) System.out.println("Small Id Sets:"+smallIds);
         String maxId=null;
         Integer maxPriority=-1;
         if(currentNodeIdSet!=null)
@@ -171,21 +171,33 @@ public class CollisionDecider {
                     maxId=idC;
                     maxPriority=priority;
                 }else if(maxPriority<priority){
-//                    if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
-//                            System.out.println("Exclude (1)" + maxId + "," + grid);
-                    excludeGrid(maxId,grid);
+//                    if ("vehicle/10041".equals(maxId) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                            System.out.println("Exclude (2)" + maxId + "," + grid);
+                    if(!smallIds.contains(maxId)) {
+//                        if ("vehicle/10041".equals(maxId) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                            System.out.println("Exclude (8)" + maxId + "," + grid);
+                        excludeGrid(maxId,grid);
+                    }
+                    else{
+                        List<OctreeGrid> remainGrids = GeoUtil.excludeChildrenGrid(grid, smallGrids.get(maxId), M);
+                        for(OctreeGrid g:remainGrids) {
+//                            if ("vehicle/10041".equals(idC) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                                System.out.println("Exclude (8)" + idC + "," + g);
+                            excludeGrid(maxId,g);
+                        }
+                    }
                     maxId=idC; maxPriority=priority;
                 }else{
                     if(!smallIds.contains(idC)) {
-//                        if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
-//                            System.out.println("Exclude (2)" + idC + "," + grid);
+//                        if ("vehicle/10041".equals(idC) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                            System.out.println("Exclude (3)" + idC + "," + grid);
                         excludeGrid(idC,grid);
                     }else{
                         if(smallGrids.containsKey(idC)) {
                             List<OctreeGrid> remainGrids = GeoUtil.excludeChildrenGrid(grid, smallGrids.get(idC), M);
                             for(OctreeGrid g:remainGrids) {
-//                                if ("vehicle/10009".equals(idC) && grid.equals(new OctreeGrid(924,558,90, 9)))
-//                                    System.out.println("Exclude (5)" + idC + "," + g);
+//                                if ("vehicle/10041".equals(idC) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                                    System.out.println("Exclude (4)" + idC + "," + g);
                                 excludeGrid(idC,g);
                             }
                         }
@@ -202,9 +214,15 @@ public class CollisionDecider {
                 continue;
             }
             if(id2Priority.get(idP)>maxPriority){
-                if(maxId!=null) excludeGrid(maxId,gridP);
+                if(maxId!=null) {
+//                    if("vehicle/10041".equals(maxId) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                        System.out.println("Exclude (5):"+maxId+","+gridP);
+                    excludeGrid(maxId,gridP);
+                }
                 higherPriorityIds.add(new Pair<>(idP,gridP));
             }else{
+//                if("vehicle/10041".equals(idP) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                    System.out.println("Exclude (6):"+idP+","+gridP);
                 excludeGrid(idP,gridP);
             }
         }
@@ -243,8 +261,8 @@ public class CollisionDecider {
         if(s==null) return ;
         for(String id:s){
             if(Objects.equals(smallId,id)) continue;
-//            if ("vehicle/10008".equals(id) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
-//                System.out.println("Exclude (4)" + id + "," + grid);
+//            if ("vehicle/10041".equals(id) && grid.equals(new OctreeGrid(340, 300, 84, 8)))
+//                System.out.println("Exclude (7)" + id + "," + grid);
             excludeGrid(id,grid);
         }
     }
