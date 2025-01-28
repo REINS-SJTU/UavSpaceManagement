@@ -5,15 +5,57 @@ import com.zhd.entity.tmp.ObservationHuman;
 import com.zhd.entity.tmp.ObservationSelf;
 import com.zhd.entity.tmp.UavPosShape;
 import com.zhd.entity.tmp.Zone;
+import com.zhd.geometry.structure.OctreeGrid;
 import com.zhd.geometry.structure.Point3D;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class GeoUtil {
 
+    // 只考虑一层的
+    public static List<OctreeGrid> excludeChildrenGrid(OctreeGrid father, Set<OctreeGrid> excludedChildren,int M){
+//        System.out.println("excludeChildrenGrid: father "+father+",exclude "+excludedChildren);
+        List<OctreeGrid> L = new ArrayList<>();
+        if(excludedChildren==null||excludedChildren.isEmpty()){
+            L.add(father);
+            return L;
+        }
+        if(excludedChildren.contains(father)) return L;
+
+        Set<OctreeGrid> [] E = new HashSet[M+1];
+        for(int i=0;i<E.length;i++) E[i] = new HashSet<>();
+        for(OctreeGrid g:excludedChildren){
+            E[g.getK()].add(g);
+        }
+//        System.out.println(E[9]+","+E[10]);
+
+        LinkedList<OctreeGrid> Q = new LinkedList<>();
+        Q.addLast(father);
+        while(!Q.isEmpty()){
+            OctreeGrid g = Q.removeFirst();
+//            System.out.println("search "+g);
+            if(E[g.getK()].contains(g)) continue;
+//            System.out.println(" Not contain. ");
+            boolean b=true;
+            for(OctreeGrid gx:excludedChildren){
+                if(OctreeSpaceEncoder.isInsideBoundingBox(gx,g)){
+                    b=false; break;
+                }
+            }
+//            System.out.println(" Not has sub exclude?"+b);
+            if(b) L.add(g);
+            else if(g.getK()<M)
+                for(int i=0;i<8;i++) {
+                    OctreeGrid subGrid = g.getSubOctreeGrid(i, M);
+//                    System.out.println("Add subGrid "+subGrid);
+                    Q.addLast(subGrid);
+                }
+        }
+
+//        System.out.println("Result is ");
+//        for (OctreeGrid g: L) System.out.println(g);
+        return L;
+    }
 
     // 根据uav的pos和shape恢复到三维空间中的点，返回bounding box
     public static Point3D[] recover(UavPosShape uavPosShape){
