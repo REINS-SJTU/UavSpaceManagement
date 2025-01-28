@@ -24,8 +24,12 @@ import org.springframework.web.client.RestTemplate;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class GeoServiceImpl implements GeoService {
@@ -238,6 +242,8 @@ public class GeoServiceImpl implements GeoService {
                         Set<String> s = new HashSet<>();
                         s.add(pairs.getId1());
                         s.add(pairs.getId2());
+//                        if(s.contains("vehicle/10008")&&s.contains("vehicle/10045"))
+//                            System.out.println("L-L conflict:"+s+","+grid);
                         props.put("conflictIdSet", s);
                         octree.insertWithProperties(grid, props);
                     }
@@ -259,6 +265,40 @@ public class GeoServiceImpl implements GeoService {
 
         mp = CollisionDecider.decideCollisionBasedOnPriority(mp, id2Priority, octree);
 
+//        System.out.println("============Check 8 & 45 =============");
+//        List<OctreeGrid> exclude1 = mp.get("vehicle/10008").getExclude();
+//        List<OctreeGrid> exclude2 = mp.get("vehicle/10045").getExclude();
+//        674,280,50,9  10008 Rmin
+//         674 281 50-51 10   10045 has excluded.
+        // x=671, y=280, z=43, k=10  都没被exclude -》 8 exclude掉了
+        // x=670, y=280, z=42, k=9  都没被exclude
+        // x=670, y=281, z=42, k=10  45 excludes 掉了
+//        OctreeGrid g = new OctreeGrid(671, 280, 43, 10);
+//        for(OctreeGrid grid:exclude1) if(OctreeSpaceEncoder.isInsideBoundingBox(g,grid)) System.out.println("10008 has.");
+//        for(OctreeGrid grid:exclude2) if(OctreeSpaceEncoder.isInsideBoundingBox(g,grid)) System.out.println("10045 has.");
+
+        // 924,558,90, 9   10009 exclude Rmin
+
+
+//        System.out.println("============Check Output.txt 8 & 45 =============");
+//        try {
+//            List<OctreeGrid> exclude1 = mp.get("vehicle/10008").getExclude();
+//            List<OctreeGrid> exclude2 = mp.get("vehicle/10045").getExclude();
+//            Stream<String> lines = Files.lines(Paths.get("./output/out.txt"));
+//            lines.forEach(ele->{
+//                String[] split = ele.split(" ");
+//                int x=Integer.parseInt(split[0]);
+//                int y=Integer.parseInt(split[1]);
+//                int z=Integer.parseInt(split[2]);
+//                OctreeGrid g2=new OctreeGrid(x,y,z,10);
+//                boolean b1 =false,b2=false;
+//                for(OctreeGrid grid:exclude1) if(OctreeSpaceEncoder.isInsideBoundingBox(g2,grid)) b1=true;
+//                for(OctreeGrid grid:exclude2) if(OctreeSpaceEncoder.isInsideBoundingBox(g2,grid)) b2=true;
+//                if(!b1&!b2) System.out.println("both keep grid "+g2);
+//            });
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
 
 
         try{

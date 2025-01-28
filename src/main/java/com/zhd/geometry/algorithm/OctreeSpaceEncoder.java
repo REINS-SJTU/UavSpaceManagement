@@ -68,6 +68,14 @@ public class OctreeSpaceEncoder {
         return Point3D.smallerOrEqual(pu,pMax) && Point3D.smallerOrEqual(pMin,pl);
     }
 
+    public static boolean isInsideBoundingBox(OctreeGrid grid,OctreeGrid grid2){
+        Point3D pl = getGridLowerBound(grid);
+        Point3D pu = getGridUpperBound(grid);
+        Point3D pMin = getGridLowerBound(grid2);
+        Point3D pMax = getGridUpperBound(grid2);
+        return Point3D.smallerOrEqual(pu,pMax) && Point3D.smallerOrEqual(pMin,pl);
+    }
+
     public static boolean isOutsideBoundingBox(OctreeGrid grid,Point3D pMax,Point3D pMin){
         Point3D pl = getGridLowerBound(grid);
         Point3D pu = getGridUpperBound(grid);

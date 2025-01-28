@@ -27,7 +27,7 @@ public class CollisionDecider {
 
 //        nodes=new ArrayList<>();
 //        OctreeNode p = octree.getRoot();
-//        OctreeGrid testGrid = new OctreeGrid(658, 280, 60, 9);
+//        OctreeGrid testGrid = new OctreeGrid(670, 280, 42, 9);
 //        for(int i=1;i<=M;i++){
 //            OctreeGrid newGrid = new OctreeGrid(testGrid.getX() >> i << i, testGrid.getY() >> i << i, testGrid.getZ() >> i << i, M - i);
 //            nodes.add(newGrid);
@@ -48,10 +48,7 @@ public class CollisionDecider {
 //                System.out.println("its parent "+grid+":"+parent.getProperties()+","+smallOcpId);
 //            t=true;
 //        }
-//        if(new OctreeGrid(658, 280, 60, 9).equals(grid)){
-//            System.out.println("Find Grid"+grid+",node is"+parent+", SMALL="+smallOcpId);
-//            t=true;
-//        }
+
         List<Pair<String,OctreeGrid>> higherPriorityIds=new ArrayList<>();
         if(parent==null) return higherPriorityIds;
         if(smallOcpId!=null){
@@ -78,10 +75,12 @@ public class CollisionDecider {
         }
         if(parent.isLeaf()){
 
+
 //            if(maxId!=null)higherPriorityIds.add(new Pair<>(maxId,grid));
 //            return higherPriorityIds;
 
             List<Pair<String, OctreeGrid>> result = comparePriority(getConflictIdSet(parent, grid), grid, new ArrayList<>());
+//            if(t) System.out.println(grid+" is a leaf."+getConflictIdSet(parent, grid));
 //            if(t) for(int i=0;i<result.size();i++) System.out.println(result.get(i).getKey()+","+result.get(i).getValue());
             return result ;
 
@@ -126,6 +125,10 @@ public class CollisionDecider {
 //            }
         }
 
+//        if(t&&grid.equals(new OctreeGrid(670, 280, 42, 9))) {
+//            List<Pair<String, OctreeGrid>> pairs = comparePriority(currentNodeIdSet, grid, L);
+//            for(Pair p:pairs) System.out.println("Compare Priority Result:"+p.getKey()+","+p.getValue());
+//        }
         return comparePriority(currentNodeIdSet,grid,L);
     }
 
@@ -133,24 +136,32 @@ public class CollisionDecider {
         List<Pair<String,OctreeGrid>> higherPriorityIds=new ArrayList<>();
 
         Set<String> smallIds = new HashSet<>();
-        if(currentNodeIdSet!=null)
-            for(Pair<String,OctreeGrid> p:L){
+        Map<String,Set<OctreeGrid>> smallGrids = new HashMap<>();
+
+        for(Pair<String,OctreeGrid> p:L){
                 String idP = p.getKey();
                 OctreeGrid gridP = p.getValue();
                 if(idP.startsWith("[SMALL]")){
                     String smallId = idP.substring("[SMALL]".length());
                     smallIds.add(smallId);
-                    for(String idC:currentNodeIdSet){
-                        if(!Objects.equals(smallId,idC)) {
-//                            if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
-//                                System.out.println("Exclude (3)" + idC + "," + grid);
-                            excludeGrid(idC,gridP);
-                        }
+                    Set<OctreeGrid> G = new HashSet<>();
+                    if(smallGrids.containsKey(smallId)) {
+                        G=smallGrids.get(smallId);
                     }
+                    G.add(gridP);
+                    smallGrids.put(smallId,G);
+                    if(currentNodeIdSet!=null)
+                        for(String idC:currentNodeIdSet){
+                            if(!Objects.equals(smallId,idC)) {
+//                                if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(670, 280, 42, 9)))
+//                                    System.out.println("Exclude (3)" + idC + "," + gridP);
+                                excludeGrid(idC,gridP);
+                            }
+                        }
                 }
-            }
+        }
 
-//        if(!smallIds.isEmpty()&&grid.equals(new OctreeGrid(658, 280, 60, 9))) System.out.println("Small Id Sets:"+smallIds);
+//        if(!smallIds.isEmpty()&&grid.equals(new OctreeGrid(924,558,90, 9))) System.out.println("Small Id Sets:"+smallIds);
         String maxId=null;
         Integer maxPriority=-1;
         if(currentNodeIdSet!=null)
@@ -169,6 +180,16 @@ public class CollisionDecider {
 //                        if ("vehicle/10008".equals(idC) && grid.equals(new OctreeGrid(658, 280, 60, 9)))
 //                            System.out.println("Exclude (2)" + idC + "," + grid);
                         excludeGrid(idC,grid);
+                    }else{
+                        if(smallGrids.containsKey(idC)) {
+                            List<OctreeGrid> remainGrids = GeoUtil.excludeChildrenGrid(grid, smallGrids.get(idC), M);
+                            for(OctreeGrid g:remainGrids) {
+//                                if ("vehicle/10009".equals(idC) && grid.equals(new OctreeGrid(924,558,90, 9)))
+//                                    System.out.println("Exclude (5)" + idC + "," + g);
+                                excludeGrid(idC,g);
+                            }
+                        }
+
                     }
                 }
             }
@@ -176,7 +197,10 @@ public class CollisionDecider {
         for(Pair<String,OctreeGrid> p: L){
             String idP = p.getKey();
             OctreeGrid gridP = p.getValue();
-            if(idP.startsWith("[SMALL]")) continue;
+            if(idP.startsWith("[SMALL]")) {
+                higherPriorityIds.add(p);
+                continue;
+            }
             if(id2Priority.get(idP)>maxPriority){
                 if(maxId!=null) excludeGrid(maxId,gridP);
                 higherPriorityIds.add(new Pair<>(idP,gridP));
