@@ -199,7 +199,7 @@ public class GeoServiceImpl implements GeoService {
         // 预测得到独占空间
         List<Zone> zones = predict(obs);
 
-        //冲突检测， 得到网格块-Set<uavId>存在octree里(大-大冲突)
+
         Octree octree = new Octree(M);
         Map<String,DivisionPlan2> mp = new HashMap<>();
         Map<String,Point3D[]> id2Box = new HashMap<>();
@@ -216,6 +216,19 @@ public class GeoServiceImpl implements GeoService {
         }
 
 
+        for(int i=0;i<latestHumanPositions.size();i++){
+            HumanPosition humanPosition = latestHumanPositions.get(i);
+            Point3D[] boundingBox = GeoUtil.recover(humanPosition);
+            id2Priority.put(humanPosition.getHumanId(),Integer.MAX_VALUE);
+            List<OctreeGrid> smallGirds = OctreeSpaceEncoder.encodeWithBoundingBox(boundingBox[0], boundingBox[1], boundingBox[2]);
+            for(OctreeGrid grid:smallGirds){
+                Map<String, Object> props = new HashMap<>();
+                props.put("small", humanPosition.getHumanId());
+                octree.insertWithProperties(grid, props);
+            }
+        }
+
+        //冲突检测， 得到网格块-Set<uavId>存在octree里(大-大冲突)
         for(int i=0;i<uavPosShapes.size();i++) {
             // 把zone恢复到空间坐标系中并且包含其占用的空间
             UavPosShape self = uavPosShapes.get(i);
@@ -260,26 +273,12 @@ public class GeoServiceImpl implements GeoService {
 
         mp = CollisionDecider.decideCollisionBasedOnPriority(mp, id2Priority, octree);
 
-//        System.out.println("============Check 8 & 45 =============");
-//        List<OctreeGrid> exclude1 = mp.get("vehicle/10008").getExclude();
-//        List<OctreeGrid> exclude2 = mp.get("vehicle/10045").getExclude();
-//        674,280,50,9  10008 Rmin
-//         674 281 50-51 10   10045 has excluded.
-        // x=671, y=280, z=43, k=10  都没被exclude -》 8 exclude掉了
-        // x=670, y=280, z=42, k=9  都没被exclude
-        // x=670, y=281, z=42, k=10  45 excludes 掉了
 
-        // [10041] x=340, y=300, z=84, k=8
-
-        // 924,558,90, 9   10009 exclude Rmin
-
-        // x=342, y=322, z=80, k=9
-
-
-//        System.out.println("============Check Output.txt 8 & 45 =============");
+        // x=922, y=554, z=90, k=10
+//        System.out.println("============Check Output.txt 9 & 33 =============");
 //        try {
-//            List<OctreeGrid> exclude1 = mp.get("vehicle/10008").getExclude();
-//            List<OctreeGrid> exclude2 = mp.get("vehicle/10045").getExclude();
+//            List<OctreeGrid> exclude1 = mp.get("vehicle/10009").getExclude();
+//            List<OctreeGrid> exclude2 = mp.get("vehicle/10033").getExclude();
 //            Stream<String> lines = Files.lines(Paths.get("./output/out.txt"));
 //            lines.forEach(ele->{
 //                String[] split = ele.split(" ");
@@ -297,19 +296,19 @@ public class GeoServiceImpl implements GeoService {
 //        }
 
 
-//        try{
-//            File file = new File("./output/metrics.csv");
-//            if(!file.exists()) file.createNewFile();
-//            FileWriter fw=new FileWriter(file.getPath(),true);
-//            BufferedWriter bw = new BufferedWriter(fw);
-//            bw.write(ts+","+
-//                    MetricsCalculator.avgMaxReachableRate(mp,id2Box,M,constantValues.v,constantValues.t)+","+
-//                    MetricsCalculator.occupancy(mp,M));
-//            bw.newLine();
-//            bw.flush();
-//        } catch (Exception e){
-//            e.printStackTrace();
-//        }
+        try{
+            File file = new File("./output/metrics.csv");
+            if(!file.exists()) file.createNewFile();
+            FileWriter fw=new FileWriter(file.getPath(),true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(ts+","+  mp.size()+","+
+                    MetricsCalculator.avgMaxReachableRate(mp,id2Box,M,constantValues.v,constantValues.t)+","+
+                    MetricsCalculator.occupancy(mp,M));
+            bw.newLine();
+            bw.flush();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
         ;
 
         List<DivisionPlan2> result = new ArrayList<>();
