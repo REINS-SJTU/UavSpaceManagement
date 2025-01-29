@@ -26,8 +26,7 @@ public class CollisionDecider {
         mp=mp_;
 
 //        nodes=new ArrayList<>();
-//        OctreeNode p = octree.getRoot();
-//        OctreeGrid testGrid = new OctreeGrid(342,322,80,9);
+//        OctreeGrid testGrid = new OctreeGrid(922,554,90,10);
 //        for(int i=1;i<=M;i++){
 //            OctreeGrid newGrid = new OctreeGrid(testGrid.getX() >> i << i, testGrid.getY() >> i << i, testGrid.getZ() >> i << i, M - i);
 //            nodes.add(newGrid);
@@ -63,8 +62,9 @@ public class CollisionDecider {
         }
         String maxId = getMaxPriorityOfOctreeNode(parent, grid);
         if("SMALL".equals(maxId)){
-//            if(t)System.out.println("====catch small==="+grid);
             String smallOcpId2 = (String) parent.getProperties().get("small");
+//            if(t)System.out.println("====catch small==="+grid+","+smallOcpId2);
+            excludeAllConflictIdExceptSmallId(smallOcpId2,parent,grid);
             for(int i=0;i<8;i++) {
                 OctreeNode child = parent.getKthChild(i);
                 OctreeGrid subGrid = grid.getSubOctreeGrid(i, M);
@@ -88,7 +88,7 @@ public class CollisionDecider {
             L.addAll(ids2);
         }
 
-//        if(t&&grid.equals(new OctreeGrid(342,322,80,9))) {
+//        if(t&&grid.equals(new OctreeGrid(922,554,90,10))) {
 //            List<Pair<String, OctreeGrid>> pairs = comparePriority(currentNodeIdSet, grid, L);
 //            for(Pair p:pairs) System.out.println("Compare Priority Result:"+p.getKey()+","+p.getValue());
 //        }
@@ -116,8 +116,8 @@ public class CollisionDecider {
                     if(currentNodeIdSet!=null)
                         for(String idC:currentNodeIdSet){
                             if(!Objects.equals(smallId,idC)) {
-                                if ("vehicle/10048".equals(idC) && gridP.equals(new OctreeGrid(342,322,80,9)))
-                                    System.out.println("Exclude (1)" + idC + "," + gridP);
+//                                if ("vehicle/10048".equals(idC) && gridP.equals(new OctreeGrid(342,322,80,9)))
+//                                    System.out.println("Exclude (1)" + idC + "," + gridP);
                                 excludeGrid(idC,gridP);
                             }
                         }

@@ -1,5 +1,6 @@
 package com.zhd.geometry.algorithm;
 
+import com.zhd.entity.HumanPosition;
 import com.zhd.entity.UavPosition;
 import com.zhd.entity.tmp.ObservationHuman;
 import com.zhd.entity.tmp.ObservationSelf;
@@ -58,6 +59,13 @@ public class GeoUtil {
 //        }
 
         return L;
+    }
+
+    public static Point3D[] recover(HumanPosition humanPosition){
+        Point3D pc = new Point3D(humanPosition.getPx(),humanPosition.getPy(),humanPosition.getPz());
+        Point3D pMax =  new Point3D(humanPosition.getPx()+15,humanPosition.getPy()+15,humanPosition.getPz()+15);
+        Point3D pMin =  new Point3D(humanPosition.getPx()-15,humanPosition.getPy()-15,humanPosition.getPz()-10);
+        return new Point3D[]{pc,pMin,pMax};
     }
 
     // 根据uav的pos和shape恢复到三维空间中的点，返回bounding box
